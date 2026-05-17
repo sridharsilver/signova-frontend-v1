@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { motion } from "framer-motion";
-import { ArrowRight, Sparkles, FlaskConical, Leaf, Atom, Droplets, Shield, Star, Quote, ChevronRight, PlayCircle } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { ArrowRight, Sparkles, FlaskConical, Leaf, Atom, Droplets, Shield, Star, Quote, ChevronRight, PlayCircle, ChevronLeft } from "lucide-react";
 import heroFarm from "@/assets/images/hero-farm.jpg";
 import lab from "@/assets/images/lab.jpg";
 import farmer from "@/assets/images/farmer.jpg";
@@ -63,16 +63,25 @@ const articles = [
 ];
 
 function HomePage() {
-  const [hero, setHero] = useState({
-    title: "Redefining {Crop Nutrition} with Science & Innovation",
-    subtitle: "Advanced micronutrients and crop solutions trusted by thousands of farmers across India.",
-    image: heroFarm,
-    primaryBtnText: "Explore Products",
-    primaryBtnLink: "/products",
-    secondaryBtnText: "Become a Distributor",
-    secondaryBtnLink: "/distributor"
+  const [heroSettings, setHeroSettings] = useState({
+    layout: "minimalist",
+    slides: [
+      {
+        id: "default",
+        title: "Redefining {Crop Nutrition} with Science & Innovation",
+        subtitle: "Advanced micronutrients and crop solutions trusted by thousands of farmers across India.",
+        image: heroFarm,
+        primaryBtnText: "Explore Products",
+        primaryBtnLink: "/products",
+        secondaryBtnText: "Become a Distributor",
+        secondaryBtnLink: "/distributor"
+      }
+    ]
   });
 
+  const [currentSlide, setCurrentSlide] = useState(0);
+
+  // 1. Fetch Dynamic settings from Supabase
   useEffect(() => {
     async function fetchHeroSettings() {
       try {
@@ -83,35 +92,56 @@ function HomePage() {
           .single();
 
         if (error) {
+          // Fallback to localStorage
           const local = localStorage.getItem("signova_frontend_settings");
           if (local) {
             const parsed = JSON.parse(local);
-            if (parsed.hero && parsed.hero.slides && parsed.hero.slides[0]) {
-              applySettings(parsed.hero.slides[0]);
+            if (parsed.hero && parsed.hero.slides && parsed.hero.slides.length > 0) {
+              setHeroSettings(parsed.hero);
             }
           }
-        } else if (data && data.value && data.value.slides && data.value.slides[0]) {
-          applySettings(data.value.slides[0]);
+        } else if (data && data.value && data.value.slides && data.value.slides.length > 0) {
+          setHeroSettings(data.value);
         }
       } catch (err) {
         console.warn("Failed to load dynamic hero settings, falling back.", err);
       }
     }
 
-    function applySettings(slide: any) {
-      setHero({
-        title: slide.title || "Redefining {Crop Nutrition} with Science & Innovation",
-        subtitle: slide.subtitle || "Advanced micronutrients and crop solutions trusted by thousands of farmers across India.",
-        image: slide.image || heroFarm,
-        primaryBtnText: slide.primaryBtnText || "Explore Products",
-        primaryBtnLink: slide.primaryBtnLink || "/products",
-        secondaryBtnText: slide.secondaryBtnText || "Become a Distributor",
-        secondaryBtnLink: slide.secondaryBtnLink || "/distributor"
-      });
-    }
-
     fetchHeroSettings();
   }, []);
+
+  // 2. Setup sliding interval (e.g. 6 seconds) when layout is 'slider'
+  useEffect(() => {
+    if (heroSettings.layout !== "slider" || heroSettings.slides.length <= 1) return;
+    
+    const interval = setInterval(() => {
+      setCurrentSlide((prev) => (prev + 1) % heroSettings.slides.length);
+    }, 6000);
+
+    return () => clearInterval(interval);
+  }, [heroSettings.layout, heroSettings.slides.length]);
+
+  const activeSlide = heroSettings.slides[currentSlide] || heroSettings.slides[0];
+
+  const [bgImage, setBgImage] = useState(heroFarm);
+
+  // 3. Preload slide background images to prevent black-screen/flash on loading or 404 errors
+  useEffect(() => {
+    if (!activeSlide.image) {
+      setBgImage(heroFarm);
+      return;
+    }
+
+    const img = new Image();
+    img.src = activeSlide.image;
+    img.onload = () => {
+      setBgImage(activeSlide.image);
+    };
+    img.onerror = () => {
+      setBgImage(heroFarm); // Fallback if image fails to load (e.g. 404)
+    };
+  }, [activeSlide.image]);
 
   const renderTitle = (titleText: string) => {
     // 1. First, check if there are curly braces in the text.
@@ -147,72 +177,261 @@ function HomePage() {
 
   return (
     <>
-      {/* HERO */}
-      <section className="relative min-h-screen flex items-center overflow-hidden bg-charcoal">
-        <div className="absolute inset-0">
-          <img src={heroFarm} alt="Lush Indian farmland aerial view" className="w-full h-full object-cover" width={1920} height={1280} />
-          <div className="absolute inset-0 bg-gradient-to-r from-charcoal via-charcoal/80 to-charcoal/30" />
-          <div className="absolute inset-0 bg-gradient-to-t from-charcoal via-transparent to-transparent" />
-        </div>
+      {/* HERO SECTION */}
+      <section className="relative min-h-screen flex items-center overflow-hidden bg-charcoal pt-28 pb-36">
+        
+        {/* ANIMATED BACKGROUND SLIDES (Only for 'slider' and 'minimalist' layouts) */}
+        {heroSettings.layout !== "split" && (
+          <div className="absolute inset-0 z-0">
+            <AnimatePresence>
+              <motion.div
+                key={currentSlide}
+                initial={{ opacity: 0, scale: 1.05 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 1.2, ease: "easeInOut" }}
+                className="absolute inset-0 bg-cover bg-center"
+                style={{ backgroundImage: `url(${bgImage})` }}
+              >
+                {/* Overlays - Minimalist gets a slightly darker, centered overlay */}
+                <div className="absolute inset-0 bg-gradient-to-r from-charcoal/90 via-charcoal/80 to-charcoal/40" />
+                {heroSettings.layout === "minimalist" && (
+                  <div className="absolute inset-0 bg-charcoal/50 backdrop-blur-[2px]" />
+                )}
+                <div className="absolute inset-0 bg-gradient-to-t from-charcoal via-transparent to-transparent" />
+              </motion.div>
+            </AnimatePresence>
+          </div>
+        )}
 
-        {/* Floating particles */}
+        {/* Floating background particles */}
         {[...Array(12)].map((_, i) => (
           <motion.div
             key={i}
-            className="absolute size-2 rounded-full bg-lime/40 blur-sm"
+            className="absolute size-2 rounded-full bg-lime/30 blur-sm z-10"
             style={{ left: `${(i * 83) % 100}%`, top: `${(i * 47) % 100}%` }}
-            animate={{ y: [0, -30, 0], opacity: [0.3, 0.8, 0.3] }}
+            animate={{ y: [0, -30, 0], opacity: [0.2, 0.7, 0.2] }}
             transition={{ duration: 4 + (i % 3), repeat: Infinity, delay: i * 0.3 }}
           />
         ))}
 
-        <div className="relative max-w-7xl mx-auto px-6 py-32 w-full text-white">
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8 }}
-            className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full glass-dark text-xs uppercase tracking-[0.25em] text-lime mb-8"
-          >
-            <Sparkles className="size-3.5" /> Science • Nutrition • Growth
-          </motion.div>
+        <div className="relative max-w-7xl mx-auto px-6 py-20 w-full text-white z-20">
+          
+          {/* 1. MINIMALIST LAYOUT (Center-aligned Copy) */}
+          {heroSettings.layout === "minimalist" && (
+            <div className="flex flex-col items-center text-center max-w-4xl mx-auto">
+              <motion.div
+                initial={{ opacity: 0, y: 15 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6 }}
+                className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full glass-dark text-xs uppercase tracking-[0.25em] text-lime mb-8"
+              >
+                <Sparkles className="size-3.5" /> Science • Nutrition • Growth
+              </motion.div>
 
-          <motion.h1
-            initial={{ opacity: 0, y: 40 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.9, delay: 0.1 }}
-            className="text-5xl sm:text-6xl md:text-8xl font-bold leading-[0.95] max-w-5xl"
-          >
-            {renderTitle(hero.title)}
-          </motion.h1>
+              <motion.h1
+                initial={{ opacity: 0, y: 25 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.7, delay: 0.1 }}
+                className="text-5xl sm:text-6xl md:text-7xl font-bold leading-[1.05] tracking-tight"
+              >
+                {renderTitle(activeSlide.title)}
+              </motion.h1>
 
-          <motion.p
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.9, delay: 0.25 }}
-            className="mt-8 text-lg md:text-xl text-white/75 max-w-2xl"
-          >
-            {hero.subtitle}
-          </motion.p>
+              <motion.p
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.7, delay: 0.2 }}
+                className="mt-8 text-lg md:text-xl text-white/75 max-w-2xl leading-relaxed"
+              >
+                {activeSlide.subtitle}
+              </motion.p>
 
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.4 }}
-            className="mt-10 flex flex-wrap gap-4"
-          >
-            <Link to={hero.primaryBtnLink} className="group inline-flex items-center gap-2 px-7 py-4 rounded-2xl bg-lime-gradient text-charcoal font-semibold shadow-glow hover:scale-[1.02] transition">
-              {hero.primaryBtnText}
-              <ArrowRight className="size-4 group-hover:translate-x-1 transition" />
-            </Link>
-            <Link to={hero.secondaryBtnLink} className="inline-flex items-center gap-2 px-7 py-4 rounded-2xl glass-dark text-white font-semibold hover:bg-white/10 transition">
-              <PlayCircle className="size-5" /> {hero.secondaryBtnText}
-            </Link>
-          </motion.div>
+              <motion.div
+                initial={{ opacity: 0, y: 15 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, delay: 0.3 }}
+                className="mt-10 flex flex-wrap gap-4 justify-center"
+              >
+                {activeSlide.primaryBtnText && (
+                  <Link 
+                    to={activeSlide.primaryBtnLink} 
+                    className="group inline-flex items-center gap-2 px-7 py-4 rounded-2xl bg-lime-gradient text-charcoal font-semibold shadow-glow hover:scale-[1.02] transition"
+                  >
+                    {activeSlide.primaryBtnText}
+                    <ArrowRight className="size-4 group-hover:translate-x-1 transition" />
+                  </Link>
+                )}
+                {activeSlide.secondaryBtnText && (
+                  <Link 
+                    to={activeSlide.secondaryBtnLink} 
+                    className="inline-flex items-center gap-2 px-7 py-4 rounded-2xl glass-dark text-white font-semibold hover:bg-white/10 transition"
+                  >
+                    <PlayCircle className="size-5" /> {activeSlide.secondaryBtnText}
+                  </Link>
+                )}
+              </motion.div>
+            </div>
+          )}
 
-          <div className="absolute bottom-10 left-1/2 -translate-x-1/2 hidden md:flex flex-col items-center gap-2 text-white/50 text-xs uppercase tracking-[0.3em]">
-            <span>Scroll</span>
-            <div className="w-px h-10 bg-gradient-to-b from-white/40 to-transparent animate-pulse" />
+          {/* 2. SPLIT SCREEN LAYOUT (50/50 Dual Column Grid) */}
+          {heroSettings.layout === "split" && (
+            <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center w-full">
+              {/* Left Column Copy */}
+              <motion.div
+                initial={{ opacity: 0, x: -30 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.8, ease: "easeOut" }}
+                className="space-y-6"
+              >
+                <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full glass-dark text-xs uppercase tracking-[0.25em] text-lime">
+                  <Sparkles className="size-3.5" /> Innovation Showcase
+                </div>
+
+                <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold leading-[1.05] tracking-tight">
+                  {renderTitle(activeSlide.title)}
+                </h1>
+
+                <p className="text-lg text-white/70 leading-relaxed max-w-xl">
+                  {activeSlide.subtitle}
+                </p>
+
+                <div className="flex flex-wrap gap-4 pt-4">
+                  {activeSlide.primaryBtnText && (
+                    <Link 
+                      to={activeSlide.primaryBtnLink} 
+                      className="group inline-flex items-center gap-2 px-7 py-4 rounded-2xl bg-lime-gradient text-charcoal font-semibold shadow-glow hover:scale-[1.02] transition"
+                    >
+                      {activeSlide.primaryBtnText}
+                      <ArrowRight className="size-4 group-hover:translate-x-1 transition" />
+                    </Link>
+                  )}
+                  {activeSlide.secondaryBtnText && (
+                    <Link 
+                      to={activeSlide.secondaryBtnLink} 
+                      className="inline-flex items-center gap-2 px-7 py-4 rounded-2xl glass-dark text-white font-semibold hover:bg-white/10 transition"
+                    >
+                      <PlayCircle className="size-5" /> {activeSlide.secondaryBtnText}
+                    </Link>
+                  )}
+                </div>
+              </motion.div>
+
+              {/* Right Column Visual Card */}
+              <motion.div
+                initial={{ opacity: 0, x: 30 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.8, delay: 0.2, ease: "easeOut" }}
+                className="relative"
+              >
+                {/* Glowing Background Blur */}
+                <div className="absolute -inset-4 bg-lime/20 blur-3xl rounded-[2.5rem] z-0" />
+                
+                {/* Image Frame Card */}
+                <div className="relative z-10 aspect-[4/3] w-full rounded-[2.5rem] overflow-hidden border border-white/15 bg-charcoal/50 backdrop-blur-md group">
+                  <img 
+                    src={bgImage} 
+                    alt={activeSlide.title} 
+                    className="w-full h-full object-cover scale-100 group-hover:scale-[1.03] transition-transform duration-700 ease-out" 
+                  />
+                  {/* Subtle Card Dark Overlay */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-charcoal/50 via-transparent to-transparent pointer-events-none" />
+                </div>
+              </motion.div>
+            </div>
+          )}
+
+          {/* 3. DYNAMIC SLIDER LAYOUT (Cycling Full-bleed Carousel) */}
+          {heroSettings.layout === "slider" && (
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={currentSlide}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+                transition={{ duration: 0.6, ease: "easeOut" }}
+              >
+                {/* Pill Eyebrow */}
+                <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full glass-dark text-xs uppercase tracking-[0.25em] text-lime mb-8">
+                  <Sparkles className="size-3.5" /> Slide {currentSlide + 1} of {heroSettings.slides.length}
+                </div>
+
+                {/* Slide Header */}
+                <h1 className="text-5xl sm:text-6xl md:text-8xl font-bold leading-[0.95] max-w-5xl">
+                  {renderTitle(activeSlide.title)}
+                </h1>
+
+                {/* Slide Subtitle */}
+                <p className="mt-8 text-lg md:text-xl text-white/75 max-w-2xl leading-relaxed">
+                  {activeSlide.subtitle}
+                </p>
+
+                {/* Action Buttons */}
+                <div className="mt-10 flex flex-wrap gap-4">
+                  {activeSlide.primaryBtnText && (
+                    <Link 
+                      to={activeSlide.primaryBtnLink} 
+                      className="group inline-flex items-center gap-2 px-7 py-4 rounded-2xl bg-lime-gradient text-charcoal font-semibold shadow-glow hover:scale-[1.02] transition"
+                    >
+                      {activeSlide.primaryBtnText}
+                      <ArrowRight className="size-4 group-hover:translate-x-1 transition" />
+                    </Link>
+                  )}
+                  {activeSlide.secondaryBtnText && (
+                    <Link 
+                      to={activeSlide.secondaryBtnLink} 
+                      className="inline-flex items-center gap-2 px-7 py-4 rounded-2xl glass-dark text-white font-semibold hover:bg-white/10 transition"
+                    >
+                      <PlayCircle className="size-5" /> {activeSlide.secondaryBtnText}
+                    </Link>
+                  )}
+                </div>
+              </motion.div>
+            </AnimatePresence>
+          )}
+
+        </div>
+        {/* Unified Slider Navigation Deck (Grouped at the bottom-center, stacked perfectly above the scroll indicator) */}
+        {heroSettings.layout === "slider" && heroSettings.slides.length > 1 && (
+          <div className="absolute bottom-24 left-1/2 -translate-x-1/2 z-30 flex items-center gap-5 glass px-4 py-2 rounded-full border border-white/10 shadow-glow-lime/5">
+            {/* Previous Slide Chevron */}
+            <button
+              onClick={() => setCurrentSlide((prev) => (prev - 1 + heroSettings.slides.length) % heroSettings.slides.length)}
+              className="p-1 rounded-full hover:bg-white/10 text-white/70 hover:text-white transition-all duration-200"
+              aria-label="Previous slide"
+            >
+              <ChevronLeft className="size-5" />
+            </button>
+
+            {/* Navigation Dots */}
+            <div className="flex gap-2">
+              {heroSettings.slides.map((_, index) => (
+                <button
+                  key={index}
+                  onClick={() => setCurrentSlide(index)}
+                  className={`h-1.5 transition-all rounded-full ${
+                    currentSlide === index ? "w-5 bg-lime" : "w-1.5 bg-white/40 hover:bg-white/60"
+                  }`}
+                  aria-label={`Go to slide ${index + 1}`}
+                />
+              ))}
+            </div>
+
+            {/* Next Slide Chevron */}
+            <button
+              onClick={() => setCurrentSlide((prev) => (prev + 1) % heroSettings.slides.length)}
+              className="p-1 rounded-full hover:bg-white/10 text-white/70 hover:text-white transition-all duration-200"
+              aria-label="Next slide"
+            >
+              <ChevronRight className="size-5" />
+            </button>
           </div>
+        )}
+
+        {/* Scroll Indicator (Visible across ALL layout modes, centered at bottom of section) */}
+        <div className="absolute bottom-8 left-1/2 -translate-x-1/2 hidden md:flex flex-col items-center gap-2 text-white/40 text-xs uppercase tracking-[0.3em] z-30 pointer-events-none">
+          <span>Scroll</span>
+          <div className="w-px h-8 bg-gradient-to-b from-white/30 to-transparent animate-pulse" />
         </div>
       </section>
 
