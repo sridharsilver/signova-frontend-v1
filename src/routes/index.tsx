@@ -114,19 +114,35 @@ function HomePage() {
   }, []);
 
   const renderTitle = (titleText: string) => {
-    // Matches text inside curly braces: e.g. {Crop Nutrition}
-    const parts = titleText.split(/(\{.*?\})/);
-    return parts.map((part, index) => {
-      if (part.startsWith("{") && part.endsWith("}")) {
-        const cleanText = part.slice(1, -1);
-        return (
-          <span key={index} className="text-gradient">
-            {cleanText}
-          </span>
-        );
-      }
-      return part;
-    });
+    // 1. First, check if there are curly braces in the text.
+    if (titleText.includes("{") && titleText.includes("}")) {
+      const parts = titleText.split(/(\{.*?\})/);
+      return parts.map((part, index) => {
+        if (part.startsWith("{") && part.endsWith("}")) {
+          const cleanText = part.slice(1, -1);
+          return (
+            <span key={index} className="text-gradient">
+              {cleanText}
+            </span>
+          );
+        }
+        return part;
+      });
+    }
+
+    // 2. Backward compatibility fallback: if no braces, wrap "Crop Nutrition" automatically.
+    if (titleText.includes("Crop Nutrition")) {
+      const parts = titleText.split("Crop Nutrition");
+      return (
+        <>
+          {parts[0]}
+          <span className="text-gradient">Crop Nutrition</span>
+          {parts[1]}
+        </>
+      );
+    }
+
+    return titleText;
   };
 
   return (
