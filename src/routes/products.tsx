@@ -191,8 +191,10 @@ function Products() {
 
       <section className="py-16">
         <div className="max-w-7xl mx-auto px-6">
-          <div className="flex flex-col lg:flex-row gap-6 mb-10">
-            <div className="relative flex-1">
+          {/* Search and Category Filter Deck */}
+          <div className="space-y-6 mb-10">
+            {/* Search input */}
+            <div className="relative">
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 size-5 text-muted-foreground" />
               <input
                 value={q}
@@ -201,23 +203,24 @@ function Products() {
                 className="w-full pl-12 pr-4 py-4 rounded-2xl bg-card border border-border focus:outline-none focus:border-leaf shadow-card"
               />
             </div>
-          </div>
 
-          <div className="flex flex-wrap gap-2 mb-10">
-            {cats.map((c) => (
-              <button
-                key={c.id}
-                onClick={() => setActive(c.id)}
-                className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-semibold transition ${
-                  active === c.id
-                    ? "bg-primary text-primary-foreground shadow-card"
-                    : "bg-card border border-border hover:border-leaf"
-                }`}
-              >
-                <c.icon className="size-4" />
-                {c.name}
-              </button>
-            ))}
+            {/* Horizontal-scrolling premium category bar for mobile, wrapping grid for desktop */}
+            <div className="flex overflow-x-auto pb-4 -mb-4 -mx-6 px-6 md:mx-0 md:px-0 md:pb-0 md:mb-0 flex-nowrap md:flex-wrap gap-2 scroll-smooth [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+              {cats.map((c) => (
+                <button
+                  key={c.id}
+                  onClick={() => setActive(c.id)}
+                  className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-semibold transition shrink-0 ${
+                    active === c.id
+                      ? "bg-primary text-primary-foreground shadow-card"
+                      : "bg-card border border-border hover:border-leaf"
+                  }`}
+                >
+                  <c.icon className="size-4" />
+                  {c.name}
+                </button>
+              ))}
+            </div>
           </div>
 
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -280,7 +283,7 @@ function Products() {
                     <X className="size-5" />
                   </button>
                   <div className="grid md:grid-cols-2 gap-0">
-                    <div className="bg-gradient-to-br from-secondary to-background grid place-items-center p-8 md:p-12 md:rounded-l-3xl">
+                    <div className="bg-gradient-to-br from-secondary to-background grid place-items-center p-8 md:p-12 rounded-t-3xl md:rounded-tr-none md:rounded-l-3xl">
                       {selected.image ? (
                         <img
                           src={selected.image}
