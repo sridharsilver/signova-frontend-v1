@@ -17,6 +17,27 @@ function getInitialTheme(): Theme {
   return "light";
 }
 
+function lightenColor(hex: string, percent: number): string {
+  try {
+    let color = hex.replace("#", "");
+    if (color.length === 3) {
+      color = color[0] + color[0] + color[1] + color[1] + color[2] + color[2];
+    }
+    const num = parseInt(color, 16);
+    let r = (num >> 16) + Math.round(2.55 * percent);
+    let g = ((num >> 8) & 0x00ff) + Math.round(2.55 * percent);
+    let b = (num & 0x0000ff) + Math.round(2.55 * percent);
+
+    r = Math.min(255, Math.max(0, r));
+    g = Math.min(255, Math.max(0, g));
+    b = Math.min(255, Math.max(0, b));
+
+    return "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
+  } catch {
+    return hex;
+  }
+}
+
 function applyDynamicTheme(config: any) {
   if (typeof window === "undefined" || !config) return;
 
@@ -25,15 +46,16 @@ function applyDynamicTheme(config: any) {
   // 1. Primary & Accent Colors
   const primary = config.primaryColor || "#84cc16";
   const secondary = config.secondaryColor || "#0c0a09";
+  const lightenedPrimary = lightenColor(primary, 25);
 
   root.style.setProperty("--primary", primary);
   root.style.setProperty("--leaf", primary);
-  root.style.setProperty("--lime", secondary && secondary !== "#0c0a09" ? secondary : "#84cc16");
+  root.style.setProperty("--lime", secondary && secondary !== "#0c0a09" ? secondary : lightenedPrimary);
 
   // 2. Dynamic Gradients
   root.style.setProperty(
     "--gradient-lime",
-    `linear-gradient(135deg, ${primary}, ${secondary && secondary !== "#0c0a09" ? secondary : "#a3e635"})`
+    `linear-gradient(135deg, ${primary}, ${secondary && secondary !== "#0c0a09" ? secondary : lightenedPrimary})`
   );
 
   root.style.setProperty(
