@@ -1,8 +1,57 @@
 import { Link } from "@tanstack/react-router";
-import { Facebook, Instagram, Linkedin, Youtube, Mail, Phone, MapPin } from "lucide-react";
+import { useState, useEffect } from "react";
+import { supabase } from "@/lib/supabase";
+import { Facebook, Instagram, Linkedin, Twitter, Mail, Phone, MapPin } from "lucide-react";
 import logo from "@/assets/images/signova-logo.png";
 
 export function Footer() {
+  const [contact, setContact] = useState({
+    phone: "+91 98765 43210",
+    email: "info@signovagroup.com",
+    address: "Hyderabad, India",
+    socials: {
+      facebook: "https://facebook.com/signovagroup",
+      twitter: "https://twitter.com/signovagroup",
+      linkedin: "https://linkedin.com/company/signovagroup",
+      instagram: "https://instagram.com/signovagroup"
+    }
+  });
+
+  useEffect(() => {
+    async function fetchContactDetails() {
+      try {
+        const { data, error } = await supabase
+          .from("frontend_settings")
+          .select("*")
+          .eq("key", "contact")
+          .single();
+
+        if (error) {
+          const local = localStorage.getItem("signova_frontend_settings");
+          if (local) {
+            const parsed = JSON.parse(local);
+            if (parsed.contact) {
+              setContact(prev => ({
+                ...prev,
+                ...parsed.contact,
+                socials: { ...prev.socials, ...parsed.contact.socials }
+              }));
+            }
+          }
+        } else if (data && data.value) {
+          setContact(prev => ({
+            ...prev,
+            ...data.value,
+            socials: { ...prev.socials, ...data.value.socials }
+          }));
+        }
+      } catch (err) {
+        console.warn("Failed to fetch contact details for Footer", err);
+      }
+    }
+    fetchContactDetails();
+  }, []);
+
   return (
     <footer className="relative bg-charcoal text-white overflow-hidden">
       <div className="absolute inset-0 grid-pattern opacity-40" />
@@ -23,13 +72,20 @@ export function Footer() {
               Pioneering science-driven crop nutrition and micronutrient solutions for sustainable Indian agriculture.
             </p>
             <div className="flex gap-3">
-              {[Facebook, Instagram, Linkedin, Youtube].map((Icon, i) => (
+              {[
+                { Icon: Facebook, link: contact.socials.facebook },
+                { Icon: Instagram, link: contact.socials.instagram },
+                { Icon: Linkedin, link: contact.socials.linkedin },
+                { Icon: Twitter, link: contact.socials.twitter }
+              ].map((item, i) => (
                 <a
                   key={i}
-                  href="#"
+                  href={item.link || "#"}
+                  target="_blank"
+                  rel="noopener noreferrer"
                   className="size-10 grid place-items-center rounded-xl glass-dark hover:bg-lime-gradient hover:text-charcoal transition"
                 >
-                  <Icon className="size-4" />
+                  <item.Icon className="size-4" />
                 </a>
               ))}
             </div>
@@ -58,7 +114,7 @@ export function Footer() {
           <div>
             <h4 className="font-semibold mb-4 text-sm uppercase tracking-wider text-lime">Newsletter</h4>
             <p className="text-sm text-white/70 mb-3">Crop tips & updates monthly.</p>
-            <form className="flex gap-2">
+            <form className="flex gap-2" onSubmit={(e) => e.preventDefault()}>
               <input
                 type="email"
                 placeholder="you@email.com"
@@ -69,9 +125,9 @@ export function Footer() {
               </button>
             </form>
             <div className="mt-6 space-y-2 text-xs text-white/60">
-              <div className="flex items-center gap-2"><Mail className="size-3.5" /> info@signovagroup.com</div>
-              <div className="flex items-center gap-2"><Phone className="size-3.5" /> +91 98765 43210</div>
-              <div className="flex items-center gap-2"><MapPin className="size-3.5" /> Hyderabad, India</div>
+              <div className="flex items-center gap-2"><Mail className="size-3.5" /> {contact.email}</div>
+              <div className="flex items-center gap-2"><Phone className="size-3.5" /> {contact.phone}</div>
+              <div className="flex items-center gap-2"><MapPin className="size-3.5" /> {contact.address}</div>
             </div>
           </div>
         </div>

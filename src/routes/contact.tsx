@@ -1,4 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { useState, useEffect } from "react";
+import { supabase } from "@/lib/supabase";
 import { PageHero } from "@/components/layout/PageShell";
 import { Mail, Phone, MapPin, MessageCircle } from "lucide-react";
 
@@ -15,6 +17,43 @@ export const Route = createFileRoute("/contact")({
 });
 
 function Contact() {
+  const [contact, setContact] = useState({
+    phone: "+91 98765 43210",
+    email: "info@signovagroup.com",
+    address: "Plot 42, Genome Valley, Hyderabad, Telangana",
+    mapsEmbed: "https://www.openstreetmap.org/export/embed.html?bbox=78.40%2C17.50%2C78.55%2C17.55&layer=mapnik",
+  });
+
+  useEffect(() => {
+    async function fetchContactDetails() {
+      try {
+        const { data, error } = await supabase
+          .from("frontend_settings")
+          .select("*")
+          .eq("key", "contact")
+          .single();
+
+        if (error) {
+          const local = localStorage.getItem("signova_frontend_settings");
+          if (local) {
+            const parsed = JSON.parse(local);
+            if (parsed.contact) {
+              setContact(prev => ({ ...prev, ...parsed.contact }));
+            }
+          }
+        } else if (data && data.value) {
+          setContact(prev => ({ ...prev, ...data.value }));
+        }
+      } catch (err) {
+        console.warn("Failed to fetch contact details from Supabase", err);
+      }
+    }
+    fetchContactDetails();
+  }, []);
+
+  const cleanPhone = contact.phone.replace(/[^0-9]/g, "");
+  const waLink = `https://wa.me/${cleanPhone.startsWith("91") ? cleanPhone : "91" + cleanPhone}`;
+
   return (
     <>
       <PageHero
@@ -26,9 +65,9 @@ function Contact() {
       <section className="py-20">
         <div className="max-w-7xl mx-auto px-6 grid lg:grid-cols-3 gap-6 mb-16">
           {[
-            { i: Phone, t: "Call", v: "+91 98765 43210", s: "Mon–Sat, 9 AM – 7 PM" },
-            { i: Mail, t: "Email", v: "info@signovagroup.com", s: "Response within 24 hrs" },
-            { i: MapPin, t: "Visit", v: "Hyderabad HQ", s: "Plot 42, Genome Valley, TS" },
+            { i: Phone, t: "Call", v: contact.phone, s: "Mon–Sat, 9 AM – 7 PM" },
+            { i: Mail, t: "Email", v: contact.email, s: "Response within 24 hrs" },
+            { i: MapPin, t: "Visit", v: "Hyderabad HQ", s: contact.address },
           ].map((c, i) => (
             <div key={i} className="bg-card rounded-3xl p-7 shadow-card hover:shadow-glow transition">
               <div className="size-12 rounded-2xl bg-lime-gradient grid place-items-center mb-5">
@@ -60,7 +99,7 @@ function Contact() {
             <button className="w-full px-5 py-3.5 rounded-xl bg-primary text-primary-foreground font-semibold hover:opacity-90 transition">
               Send Message
             </button>
-            <a href="https://wa.me/919876543210" className="flex items-center justify-center gap-2 px-5 py-3.5 rounded-xl bg-lime-gradient text-charcoal font-semibold">
+            <a href={waLink} target="_blank" rel="noopener noreferrer" className="flex items-center justify-center gap-2 px-5 py-3.5 rounded-xl bg-lime-gradient text-charcoal font-semibold">
               <MessageCircle className="size-4" /> Chat on WhatsApp
             </a>
           </form>
@@ -68,7 +107,7 @@ function Contact() {
           <div className="rounded-3xl overflow-hidden shadow-card min-h-[400px]">
             <iframe
               title="Signova HQ"
-              src="https://www.openstreetmap.org/export/embed.html?bbox=78.40%2C17.50%2C78.55%2C17.55&layer=mapnik"
+              src={contact.mapsEmbed}
               className="w-full h-full min-h-[400px] border-0"
               loading="lazy"
             />
