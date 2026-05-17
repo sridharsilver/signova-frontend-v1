@@ -1,4 +1,5 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
+import { supabase } from "@/lib/supabase";
 
 type Theme = "light" | "dark";
 
@@ -16,6 +17,50 @@ function getInitialTheme(): Theme {
   return "light";
 }
 
+function applyDynamicTheme(config: any) {
+  if (typeof window === "undefined" || !config) return;
+
+  const root = document.documentElement;
+
+  // 1. Primary & Accent Colors
+  const primary = config.primaryColor || "#84cc16";
+  const secondary = config.secondaryColor || "#0c0a09";
+
+  root.style.setProperty("--primary", primary);
+  root.style.setProperty("--leaf", primary);
+  root.style.setProperty("--lime", secondary && secondary !== "#0c0a09" ? secondary : "#84cc16");
+
+  // 2. Dynamic Gradients
+  root.style.setProperty(
+    "--gradient-lime",
+    `linear-gradient(135deg, ${primary}, ${secondary && secondary !== "#0c0a09" ? secondary : "#a3e635"})`
+  );
+
+  root.style.setProperty(
+    "--gradient-hero",
+    `linear-gradient(135deg, ${primary} 0%, #171717 60%, #0a0a0a 100%)`
+  );
+
+  // 3. Dynamic Shadows using brand color with hex opacity
+  root.style.setProperty("--shadow-glow", `0 20px 60px -20px ${primary}60`);
+  root.style.setProperty("--shadow-card", `0 10px 40px -15px ${primary}20`);
+
+  // 4. Dynamic Font Family loader
+  const font = config.fontFamily || "Inter";
+  root.style.setProperty("--font-sans", `"${font}", sans-serif`);
+  root.style.setProperty("--font-display", `"${font}", sans-serif`);
+
+  // Inject Google Font link dynamically
+  const fontId = `google-font-${font.replace(/\s+/g, "-").toLowerCase()}`;
+  if (!document.getElementById(fontId)) {
+    const link = document.createElement("link");
+    link.id = fontId;
+    link.rel = "stylesheet";
+    link.href = `https://fonts.googleapis.com/css2?family=${font.replace(/\s+/g, "+")}:wght@300;400;500;600;700;800&display=swap`;
+    document.head.appendChild(link);
+  }
+}
+
 export function ThemeProvider({ children }: { children: ReactNode }) {
   const [theme, setThemeState] = useState<Theme>(getInitialTheme);
 
@@ -27,6 +72,51 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
       localStorage.setItem("theme", theme);
     } catch {}
   }, [theme]);
+
+  // Dynamic database theme fetch and cache loading
+  useEffect(() => {
+    // 1. Initial cached load to eliminate FOUC (flash of unstyled content)
+    const localSettings = localStorage.getItem("signova_frontend_settings");
+    if (localSettings) {
+      try {
+        const parsed = JSON.parse(localSettings);
+        if (parsed.theme) {
+          applyDynamicTheme(parsed.theme);
+        }
+      } catch (err) {
+        console.warn("Failed to parse cached theme", err);
+      }
+    }
+
+    // 2. Fetch fresh theme settings from Supabase
+    async function fetchDatabaseTheme() {
+      try {
+        const { data, error } = await supabase
+          .from("frontend_settings")
+          .select("*")
+          .eq("key", "theme")
+          .single();
+
+        if (!error && data && data.value) {
+          applyDynamicTheme(data.value);
+
+          // Update cache
+          const localSettingsRaw = localStorage.getItem("signova_frontend_settings") || "{}";
+          try {
+            const currentCache = JSON.parse(localSettingsRaw);
+            currentCache.theme = data.value;
+            localStorage.setItem("signova_frontend_settings", JSON.stringify(currentCache));
+          } catch {
+            localStorage.setItem("signova_frontend_settings", JSON.stringify({ theme: data.value }));
+          }
+        }
+      } catch (err) {
+        console.warn("Failed to fetch brand theme from Supabase", err);
+      }
+    }
+
+    fetchDatabaseTheme();
+  }, []);
 
   const setTheme = (t: Theme) => setThemeState(t);
   const toggleTheme = () => setThemeState((t) => (t === "dark" ? "light" : "dark"));
