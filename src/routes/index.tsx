@@ -132,7 +132,7 @@ function HomePage() {
       {/* HERO */}
       <section className="relative min-h-screen flex items-center overflow-hidden bg-charcoal">
         <div className="absolute inset-0">
-          <img src={hero.image} alt="Lush Indian farmland aerial view" className="w-full h-full object-cover" width={1920} height={1280} />
+          <img src={heroFarm} alt="Lush Indian farmland aerial view" className="w-full h-full object-cover" width={1920} height={1280} />
           <div className="absolute inset-0 bg-gradient-to-r from-charcoal via-charcoal/80 to-charcoal/30" />
           <div className="absolute inset-0 bg-gradient-to-t from-charcoal via-transparent to-transparent" />
         </div>
