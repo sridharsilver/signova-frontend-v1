@@ -64,7 +64,7 @@ const articles = [
 
 function HomePage() {
   const [hero, setHero] = useState({
-    title: "Redefining Crop Nutrition with Science & Innovation",
+    title: "Redefining {Crop Nutrition} with Science & Innovation",
     subtitle: "Advanced micronutrients and crop solutions trusted by thousands of farmers across India.",
     image: heroFarm,
     primaryBtnText: "Explore Products",
@@ -100,7 +100,7 @@ function HomePage() {
 
     function applySettings(slide: any) {
       setHero({
-        title: slide.title || "Redefining Crop Nutrition with Science & Innovation",
+        title: slide.title || "Redefining {Crop Nutrition} with Science & Innovation",
         subtitle: slide.subtitle || "Advanced micronutrients and crop solutions trusted by thousands of farmers across India.",
         image: slide.image || heroFarm,
         primaryBtnText: slide.primaryBtnText || "Explore Products",
@@ -114,17 +114,19 @@ function HomePage() {
   }, []);
 
   const renderTitle = (titleText: string) => {
-    if (titleText.includes("Crop Nutrition")) {
-      const parts = titleText.split("Crop Nutrition");
-      return (
-        <>
-          {parts[0]}
-          <span className="text-gradient">Crop Nutrition</span>
-          {parts[1]}
-        </>
-      );
-    }
-    return titleText;
+    // Matches text inside curly braces: e.g. {Crop Nutrition}
+    const parts = titleText.split(/(\{.*?\})/);
+    return parts.map((part, index) => {
+      if (part.startsWith("{") && part.endsWith("}")) {
+        const cleanText = part.slice(1, -1);
+        return (
+          <span key={index} className="text-gradient">
+            {cleanText}
+          </span>
+        );
+      }
+      return part;
+    });
   };
 
   return (
