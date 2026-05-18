@@ -6,17 +6,19 @@ import { motion, AnimatePresence } from "framer-motion";
 export function WhatsAppFab() {
   const [phone, setPhone] = useState("+91 98765 43210");
   const [showFab, setShowFab] = useState(false);
+  const [isVisible, setIsVisible] = useState(true);
 
   useEffect(() => {
-    async function fetchPhone() {
+    async function fetchPhoneAndSettings() {
       try {
-        const { data, error } = await supabase
+        // 1. Fetch contact details for WhatsApp phone number
+        const { data: contactData, error: contactError } = await supabase
           .from("frontend_settings")
           .select("*")
           .eq("key", "contact")
           .single();
 
-        if (error) {
+        if (contactError) {
           const local = localStorage.getItem("signova_frontend_settings");
           if (local) {
             const parsed = JSON.parse(local);
@@ -24,14 +26,33 @@ export function WhatsAppFab() {
               setPhone(parsed.contact.phone);
             }
           }
-        } else if (data && data.value && data.value.phone) {
-          setPhone(data.value.phone);
+        } else if (contactData && contactData.value && contactData.value.phone) {
+          setPhone(contactData.value.phone);
+        }
+
+        // 2. Fetch theme details for WhatsApp show/hide setting
+        const { data: themeData, error: themeError } = await supabase
+          .from("frontend_settings")
+          .select("*")
+          .eq("key", "theme")
+          .single();
+
+        if (themeError) {
+          const local = localStorage.getItem("signova_frontend_settings");
+          if (local) {
+            const parsed = JSON.parse(local);
+            if (parsed.theme && parsed.theme.showWhatsApp !== undefined) {
+              setIsVisible(parsed.theme.showWhatsApp !== false);
+            }
+          }
+        } else if (themeData && themeData.value && themeData.value.showWhatsApp !== undefined) {
+          setIsVisible(themeData.value.showWhatsApp !== false);
         }
       } catch (err) {
-        console.warn("Failed to fetch WhatsApp phone for Fab", err);
+        console.warn("Failed to fetch WhatsApp configurations", err);
       }
     }
-    fetchPhone();
+    fetchPhoneAndSettings();
   }, []);
 
   useEffect(() => {
@@ -57,7 +78,7 @@ export function WhatsAppFab() {
 
   return (
     <AnimatePresence>
-      {showFab && (
+      {showFab && isVisible && (
         <motion.a
           href={waLink}
           target="_blank"

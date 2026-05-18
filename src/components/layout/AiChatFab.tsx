@@ -1,10 +1,39 @@
 import { useChatModal } from "@/lib/chat-modal";
 import { Sparkles } from "lucide-react";
 import { useState, useEffect } from "react";
+import { supabase } from "@/lib/supabase";
 
 export function AiChatFab() {
   const [showTooltip, setShowTooltip] = useState(false);
   const [isOpen, setIsOpen] = useChatModal();
+  const [isVisible, setIsVisible] = useState(true);
+
+  useEffect(() => {
+    async function fetchSettings() {
+      try {
+        const { data, error } = await supabase
+          .from("frontend_settings")
+          .select("*")
+          .eq("key", "theme")
+          .single();
+
+        if (error) {
+          const local = localStorage.getItem("signova_frontend_settings");
+          if (local) {
+            const parsed = JSON.parse(local);
+            if (parsed.theme && parsed.theme.showAiChat !== undefined) {
+              setIsVisible(parsed.theme.showAiChat !== false);
+            }
+          }
+        } else if (data && data.value && data.value.showAiChat !== undefined) {
+          setIsVisible(data.value.showAiChat !== false);
+        }
+      } catch (err) {
+        console.warn("Failed to fetch AI Chat visibility configurations", err);
+      }
+    }
+    fetchSettings();
+  }, []);
 
   useEffect(() => {
     // Show a subtle welcoming hint after 3 seconds, then hide it after 8 seconds
@@ -16,6 +45,8 @@ export function AiChatFab() {
       clearTimeout(hideTimer);
     };
   }, []);
+
+  if (!isVisible) return null;
 
   return (
     <div className="fixed bottom-6 right-6 z-40 flex items-center gap-3">
