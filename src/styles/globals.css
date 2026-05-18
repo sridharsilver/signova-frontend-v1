@@ -161,3 +161,11 @@
     background-size: 56px 56px;
   }
 }
+
+/* Bulletproof mobile responsive hiding utility */
+@media (max-width: 767px) {
+  .mobile-controls-hidden {
+    display: none !important;
+  }
+}
+
