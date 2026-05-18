@@ -194,11 +194,27 @@ function HomePage() {
   };
 
   const isDefault = activeSlide.id === "default";
-  const slideTitle = isDefault ? t("home.hero.title") : activeSlide.title;
-  const slideSubtitle = isDefault ? t("home.hero.subtitle") : activeSlide.subtitle;
-  const slideEyebrow = isDefault ? t("home.hero.eyebrow") : activeSlide.eyebrow;
-  const primaryBtn = isDefault ? t("home.hero.explore") : activeSlide.primaryBtnText;
-  const secondaryBtn = isDefault ? t("home.hero.becomePartner") : activeSlide.secondaryBtnText;
+  
+  // Dynamically map seeded database strings or default slider texts to translation keys
+  const slideTitle = isDefault || activeSlide.title === "Redefining {Crop Nutrition} with Science & Innovation"
+    ? t("home.hero.title")
+    : activeSlide.title;
+    
+  const slideSubtitle = isDefault || activeSlide.subtitle === "Advanced micronutrients and crop solutions trusted by thousands of farmers across India."
+    ? t("home.hero.subtitle")
+    : activeSlide.subtitle;
+    
+  const slideEyebrow = isDefault || activeSlide.eyebrow === "Science • Nutrition • Growth" || activeSlide.eyebrow === "Science \u2022 Nutrition \u2022 Growth"
+    ? t("home.hero.eyebrow")
+    : activeSlide.eyebrow;
+    
+  const primaryBtn = isDefault || activeSlide.primaryBtnText === "Explore Products"
+    ? t("home.hero.explore")
+    : activeSlide.primaryBtnText;
+    
+  const secondaryBtn = isDefault || activeSlide.secondaryBtnText === "Become a Distributor" || activeSlide.secondaryBtnText === "Become a Partner"
+    ? t("home.hero.becomePartner")
+    : activeSlide.secondaryBtnText;
 
   return (
     <>
