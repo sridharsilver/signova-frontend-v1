@@ -192,3 +192,12 @@ html[lang="te"] .font-sans {
   font-family: "Noto Serif Telugu", "Inter", sans-serif;
 }
 
+/* Remove tight character/letter spacing for other complex Indian scripts to prevent overlapping characters */
+html[lang="hi"] h1, html[lang="hi"] h2, html[lang="hi"] h3, html[lang="hi"] h4, html[lang="hi"] h5, html[lang="hi"] h6, html[lang="hi"] .font-display,
+html[lang="gu"] h1, html[lang="gu"] h2, html[lang="gu"] h3, html[lang="gu"] h4, html[lang="gu"] h5, html[lang="gu"] h6, html[lang="gu"] .font-display,
+html[lang="mr"] h1, html[lang="mr"] h2, html[lang="mr"] h3, html[lang="mr"] h4, html[lang="mr"] h5, html[lang="mr"] h6, html[lang="mr"] .font-display,
+html[lang="ta"] h1, html[lang="ta"] h2, html[lang="ta"] h3, html[lang="ta"] h4, html[lang="ta"] h5, html[lang="ta"] h6, html[lang="ta"] .font-display,
+html[lang="kn"] h1, html[lang="kn"] h2, html[lang="kn"] h3, html[lang="kn"] h4, html[lang="kn"] h5, html[lang="kn"] h6, html[lang="kn"] .font-display {
+  letter-spacing: normal !important;
+}
+
