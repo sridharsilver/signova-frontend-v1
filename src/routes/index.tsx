@@ -83,12 +83,27 @@ function HomePage() {
     ]
   };
 
-  const [heroSettings, setHeroSettings] = useState<any>({
-    layout: null, // Start as null to prevent flashing minimalist layout on refresh!
-    showSlideNumber: true,
-    showControls: true,
-    showControlsMobile: true,
-    slides: defaultHeroSettings.slides
+  const [heroSettings, setHeroSettings] = useState<any>(() => {
+    if (typeof window !== "undefined") {
+      try {
+        const local = localStorage.getItem("signova_frontend_settings");
+        if (local) {
+          const parsed = JSON.parse(local);
+          if (parsed.hero && parsed.hero.slides && parsed.hero.slides.length > 0) {
+            return parsed.hero;
+          }
+        }
+      } catch (err) {
+        console.warn("Failed to parse initial hero settings from cache", err);
+      }
+    }
+    return {
+      layout: null, // Start as null to prevent flashing minimalist layout on refresh!
+      showSlideNumber: true,
+      showControls: true,
+      showControlsMobile: true,
+      slides: defaultHeroSettings.slides
+    };
   });
 
   const [currentSlide, setCurrentSlide] = useState(0);
@@ -116,6 +131,16 @@ function HomePage() {
           setHeroSettings(defaultHeroSettings);
         } else if (data && data.value && data.value.slides && data.value.slides.length > 0) {
           setHeroSettings(data.value);
+          
+          // Cache the fresh settings in localStorage to prevent FOUC / layout flash on future visits
+          try {
+            const localRaw = localStorage.getItem("signova_frontend_settings") || "{}";
+            const parsed = JSON.parse(localRaw);
+            parsed.hero = data.value;
+            localStorage.setItem("signova_frontend_settings", JSON.stringify(parsed));
+          } catch {
+            localStorage.setItem("signova_frontend_settings", JSON.stringify({ hero: data.value }));
+          }
         } else {
           setHeroSettings(defaultHeroSettings);
         }
@@ -142,11 +167,13 @@ function HomePage() {
 
   const activeSlide = heroSettings.slides[currentSlide] || heroSettings.slides[0];
 
-  const [bgImage, setBgImage] = useState(heroFarm);
+  const [bgImage, setBgImage] = useState<string>(() => {
+    return activeSlide?.image || heroFarm;
+  });
 
   // 3. Preload slide background images to prevent black-screen/flash on loading or 404 errors
   useEffect(() => {
-    if (!activeSlide.image) {
+    if (!activeSlide?.image) {
       setBgImage(heroFarm);
       return;
     }
@@ -159,7 +186,7 @@ function HomePage() {
     img.onerror = () => {
       setBgImage(heroFarm); // Fallback if image fails to load (e.g. 404)
     };
-  }, [activeSlide.image]);
+  }, [activeSlide?.image]);
 
   const renderTitle = (titleText: string) => {
     // 1. First, check if there are curly braces in the text.
