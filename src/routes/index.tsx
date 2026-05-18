@@ -435,7 +435,7 @@ function HomePage() {
         </div>
         {/* Unified Slider Navigation Deck (Grouped at the bottom-center, stacked perfectly above the scroll indicator) */}
         {heroSettings.layout === "slider" && heroSettings.slides.length > 1 && heroSettings.showControls !== false && (
-          <div className="absolute bottom-8 md:bottom-24 lg:bottom-32 left-1/2 -translate-x-1/2 z-30 flex items-center gap-5 glass px-4 py-2 rounded-full border border-white/10 shadow-glow-lime/5">
+          <div className="absolute bottom-32 left-1/2 -translate-x-1/2 z-30 flex items-center gap-5 glass px-4 py-2 rounded-full border border-white/10 shadow-glow-lime/5">
             {/* Previous Slide Chevron */}
             <button
               onClick={() => setCurrentSlide((prev) => (prev - 1 + heroSettings.slides.length) % heroSettings.slides.length)}
