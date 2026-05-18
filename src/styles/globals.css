@@ -169,3 +169,26 @@
   }
 }
 
+/* Custom Typography for Telugu (Heddings use Ramabhadra Font) */
+html[lang="te"] h1,
+html[lang="te"] h2,
+html[lang="te"] h3,
+html[lang="te"] h4,
+html[lang="te"] h5,
+html[lang="te"] h6,
+html[lang="te"] .font-display {
+  font-family: "Ramabhadra", "Space Grotesk", sans-serif;
+  letter-spacing: normal !important;
+  font-weight: normal !important;
+}
+
+/* Custom Body Typography for Telugu (Noto Serif Telugu Font) */
+html[lang="te"] body,
+html[lang="te"] input,
+html[lang="te"] textarea,
+html[lang="te"] select,
+html[lang="te"] button,
+html[lang="te"] .font-sans {
+  font-family: "Noto Serif Telugu", "Inter", sans-serif;
+}
+

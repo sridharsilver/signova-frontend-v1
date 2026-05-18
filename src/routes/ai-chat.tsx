@@ -301,6 +301,20 @@ export function AiChat({ isModal = false, onClose }: { isModal?: boolean; onClos
   }, []);
 
   useEffect(() => {
+    const handleGlobalLangChange = () => {
+      const savedLang = localStorage.getItem("signova_chat_lang") as LanguageKey;
+      if (savedLang && LOCALIZATION[savedLang] && savedLang !== lang) {
+        setLang(savedLang);
+        const time = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+        const greeting = LOCALIZATION[savedLang]?.welcome || LOCALIZATION.en.welcome;
+        setMessages([{ sender: "bot", text: greeting, timestamp: time }]);
+      }
+    };
+    window.addEventListener("signova_language_changed", handleGlobalLangChange);
+    return () => window.removeEventListener("signova_language_changed", handleGlobalLangChange);
+  }, [lang]);
+
+  useEffect(() => {
     if (messages.length > 0) {
       localStorage.setItem("signova_chat_history", JSON.stringify(messages));
     }
@@ -319,6 +333,7 @@ export function AiChat({ isModal = false, onClose }: { isModal?: boolean; onClos
     const greeting = LOCALIZATION[newLang]?.welcome || LOCALIZATION.en.welcome;
     setMessages([{ sender: "bot", text: greeting, timestamp: time }]);
     toast.success(`Language changed to ${LOCALIZATION[newLang].name}`);
+    window.dispatchEvent(new Event("signova_language_changed"));
   };
 
   const clearChat = () => {

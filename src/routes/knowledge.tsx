@@ -1,7 +1,8 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { PageHero } from "@/components/layout/PageShell";
 import { Clock } from "lucide-react";
-import { articles } from "./knowledge.$slug";
+import { getLocalizedArticles } from "./knowledge.$slug";
+import { useLanguage } from "@/hooks/use-language";
 
 export const Route = createFileRoute("/knowledge")({
   head: () => ({
@@ -16,12 +17,15 @@ export const Route = createFileRoute("/knowledge")({
 });
 
 function Knowledge() {
+  const { t, language } = useLanguage();
+  const articles = getLocalizedArticles(language);
+
   return (
     <>
       <PageHero
-        eyebrow="Knowledge Centre"
-        title="Practical agronomy, lab-grade science"
-        subtitle="Field guides, deficiency manuals and crop research curated by Signova experts."
+        eyebrow={t("knowledge.hero.eyebrow")}
+        title={t("knowledge.hero.title")}
+        subtitle={t("knowledge.hero.subtitle")}
       />
 
       <section className="py-20">
@@ -31,7 +35,7 @@ function Knowledge() {
               key={p.slug}
               to="/knowledge/$slug"
               params={{ slug: p.slug }}
-              className="group bg-card rounded-3xl overflow-hidden shadow-card hover:shadow-glow hover:-translate-y-1 transition"
+              className="group bg-card rounded-3xl overflow-hidden shadow-card hover:shadow-glow hover:-translate-y-1 transition cursor-pointer"
             >
               <div className="aspect-[4/3] overflow-hidden">
                 <img src={p.img} alt={p.title} loading="lazy" className="w-full h-full object-cover group-hover:scale-105 transition duration-700" />
@@ -42,7 +46,7 @@ function Knowledge() {
                   <span className="text-muted-foreground inline-flex items-center gap-1"><Clock className="size-3" />{p.time}</span>
                 </div>
                 <h3 className="text-lg font-bold leading-snug group-hover:text-primary transition mb-2">{p.title}</h3>
-                <p className="text-sm text-muted-foreground line-clamp-2">{p.excerpt}</p>
+                <p className="text-sm text-muted-foreground line-clamp-2 leading-relaxed">{p.excerpt}</p>
               </div>
             </Link>
           ))}

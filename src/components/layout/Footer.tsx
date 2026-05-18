@@ -3,8 +3,10 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
 import { Facebook, Instagram, Linkedin, Twitter, Mail, Phone, MapPin } from "lucide-react";
 import logo from "@/assets/images/signova-logo.png";
+import { useLanguage } from "@/hooks/use-language";
 
 export function Footer() {
+  const { t } = useLanguage();
   const [contact, setContact] = useState({
     phone: "+91 98765 43210",
     email: "info@signovagroup.com",
@@ -69,7 +71,7 @@ export function Footer() {
               />
             </div>
             <p className="text-white/70 text-sm leading-relaxed max-w-sm mb-6">
-              Pioneering science-driven crop nutrition and micronutrient solutions for sustainable Indian agriculture.
+              {t("footer.desc")}
             </p>
             <div className="flex gap-3">
               {[
@@ -92,48 +94,48 @@ export function Footer() {
           </div>
 
           <div>
-            <h4 className="font-semibold mb-4 text-sm uppercase tracking-wider text-lime">Company</h4>
+            <h4 className="font-semibold mb-4 text-sm uppercase tracking-wider text-lime">{t("footer.company")}</h4>
             <ul className="space-y-2.5 text-sm text-white/70">
-              <li><Link to="/about" className="hover:text-lime transition">About Us</Link></li>
-              <li><Link to="/innovation" className="hover:text-lime transition">R&D</Link></li>
-              <li><Link to="/careers" className="hover:text-lime transition">Careers</Link></li>
-              <li><Link to="/contact" className="hover:text-lime transition">Contact</Link></li>
+              <li><Link to="/about" className="hover:text-lime transition">{t("navbar.aboutUs")}</Link></li>
+              <li><Link to="/innovation" className="hover:text-lime transition">{t("navbar.innovation")}</Link></li>
+              <li><Link to="/careers" className="hover:text-lime transition">{t("navbar.careers")}</Link></li>
+              <li><Link to="/contact" className="hover:text-lime transition">{t("navbar.contactUs")}</Link></li>
             </ul>
           </div>
 
           <div>
-            <h4 className="font-semibold mb-4 text-sm uppercase tracking-wider text-lime">Products</h4>
+            <h4 className="font-semibold mb-4 text-sm uppercase tracking-wider text-lime">{t("footer.solutions")}</h4>
             <ul className="space-y-2.5 text-sm text-white/70">
-              <li><Link to="/products" className="hover:text-lime transition">Chelated Micronutrients</Link></li>
-              <li><Link to="/products" className="hover:text-lime transition">Bio Stimulants</Link></li>
-              <li><Link to="/products" className="hover:text-lime transition">Nano Technology</Link></li>
-              <li><Link to="/products" className="hover:text-lime transition">Crop Protectors</Link></li>
+              <li><Link to="/products" className="hover:text-lime transition">{t("home.categories.chelated.title")}</Link></li>
+              <li><Link to="/products" className="hover:text-lime transition">{t("home.categories.bio.title")}</Link></li>
+              <li><Link to="/products" className="hover:text-lime transition">{t("home.categories.nano.title")}</Link></li>
+              <li><Link to="/products" className="hover:text-lime transition">{t("home.categories.protectors.title")}</Link></li>
             </ul>
           </div>
 
           <div>
-            <h4 className="font-semibold mb-4 text-sm uppercase tracking-wider text-lime">Newsletter</h4>
-            <p className="text-sm text-white/70 mb-3">Crop tips & updates monthly.</p>
+            <h4 className="font-semibold mb-4 text-sm uppercase tracking-wider text-lime">{t("footer.newsletter")}</h4>
+            <p className="text-sm text-white/70 mb-3">{t("footer.newsletterDesc")}</p>
             <form className="flex gap-2" onSubmit={(e) => e.preventDefault()}>
               <input
                 type="email"
-                placeholder="you@email.com"
+                placeholder={t("footer.emailPlaceholder")}
                 className="flex-1 min-w-0 px-3 py-2.5 rounded-lg bg-white/10 border border-white/15 text-sm text-white placeholder:text-white/40 focus:outline-none focus:border-lime"
               />
-              <button className="px-4 py-2.5 rounded-lg bg-lime-gradient text-charcoal text-sm font-semibold hover:opacity-90">
-                Join
+              <button className="px-4 py-2.5 rounded-lg bg-lime-gradient text-charcoal text-sm font-semibold hover:opacity-90 cursor-pointer">
+                {t("footer.subscribe")}
               </button>
             </form>
             <div className="mt-6 space-y-2 text-xs text-white/60">
               <div className="flex items-center gap-2"><Mail className="size-3.5" /> {contact.email}</div>
               <div className="flex items-center gap-2"><Phone className="size-3.5" /> {contact.phone}</div>
-              <div className="flex items-center gap-2"><MapPin className="size-3.5" /> {contact.address}</div>
+              <div className="flex items-center gap-2"><MapPin className="size-3.5" /> {contact.address === "Hyderabad, India" ? t("footer.addressVal") : contact.address}</div>
             </div>
           </div>
         </div>
 
         <div className="pt-8 border-t border-white/10 flex flex-col md:flex-row justify-between items-center gap-3 text-xs text-white/50">
-          <div>© {new Date().getFullYear()} Signova Group of Companies. All rights reserved.</div>
+          <div>© {new Date().getFullYear()} Signova Group of Companies. {t("footer.allRightsReserved")}</div>
           <div className="flex gap-5">
             <a href="#" className="hover:text-lime">Privacy</a>
             <a href="#" className="hover:text-lime">Terms</a>

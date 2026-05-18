@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
 import { PageHero } from "@/components/layout/PageShell";
 import { Mail, Phone, MapPin, MessageCircle } from "lucide-react";
+import { useLanguage } from "@/hooks/use-language";
 
 export const Route = createFileRoute("/contact")({
   head: () => ({
@@ -17,6 +18,7 @@ export const Route = createFileRoute("/contact")({
 });
 
 function Contact() {
+  const { t } = useLanguage();
   const [contact, setContact] = useState({
     phone: "+91 98765 43210",
     email: "info@signovagroup.com",
@@ -57,17 +59,17 @@ function Contact() {
   return (
     <>
       <PageHero
-        eyebrow="Contact"
-        title="Let's grow something together"
-        subtitle="Reach our team for product info, agronomy advice or partnership opportunities."
+        eyebrow={t("contact.hero.eyebrow")}
+        title={t("contact.hero.title")}
+        subtitle={t("contact.hero.subtitle")}
       />
 
       <section className="py-20">
         <div className="max-w-7xl mx-auto px-6 grid lg:grid-cols-3 gap-6 mb-16">
           {[
-            { i: Phone, t: "Call", v: contact.phone, s: "Mon–Sat, 9 AM – 7 PM" },
-            { i: Mail, t: "Email", v: contact.email, s: "Response within 24 hrs" },
-            { i: MapPin, t: "Visit", v: "Hyderabad HQ", s: contact.address },
+            { i: Phone, t: t("contact.info.phone"), v: contact.phone, s: "Mon–Sat, 9 AM – 7 PM" },
+            { i: Mail, t: t("contact.info.email"), v: contact.email, s: "Response within 24 hrs" },
+            { i: MapPin, t: t("contact.info.hq"), v: "Signova HQ", s: contact.address === "Plot 42, Genome Valley, Hyderabad, Telangana" ? t("footer.addressVal") : contact.address },
           ].map((c, i) => (
             <div key={i} className="bg-card rounded-3xl p-7 shadow-card hover:shadow-glow transition">
               <div className="size-12 rounded-2xl bg-lime-gradient grid place-items-center mb-5">
@@ -82,25 +84,25 @@ function Contact() {
 
         <div className="max-w-7xl mx-auto px-6 grid lg:grid-cols-2 gap-10">
           <form className="bg-card rounded-3xl p-8 shadow-card space-y-4" onSubmit={(e) => e.preventDefault()}>
-            <h3 className="text-2xl font-bold">Send us a message</h3>
+            <h3 className="text-2xl font-bold">{t("contact.form.title")}</h3>
             <div className="grid sm:grid-cols-2 gap-4">
-              <input className="bg-secondary rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-leaf" placeholder="Name" required />
-              <input className="bg-secondary rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-leaf" placeholder="Phone" required />
+              <input className="bg-secondary rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-leaf" placeholder={t("contact.form.name")} required />
+              <input className="bg-secondary rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-leaf" placeholder={t("contact.form.phone")} required />
             </div>
-            <input className="w-full bg-secondary rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-leaf" placeholder="Email" type="email" />
+            <input className="w-full bg-secondary rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-leaf" placeholder={t("contact.form.email")} type="email" />
             <select className="w-full bg-secondary rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-leaf">
-              <option>Product enquiry</option>
-              <option>Dealer / Distributor</option>
-              <option>Agronomy advice</option>
-              <option>Career</option>
-              <option>Other</option>
+              <option>{t("navbar.solutions")}</option>
+              <option>{t("navbar.becomeDistributor")}</option>
+              <option>{t("navbar.aiChat")}</option>
+              <option>{t("navbar.careers")}</option>
+              <option>{t("contact.form.subject")}</option>
             </select>
-            <textarea rows={5} className="w-full bg-secondary rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-leaf" placeholder="How can we help?" />
-            <button className="w-full px-5 py-3.5 rounded-xl bg-primary text-primary-foreground font-semibold hover:opacity-90 transition">
-              Send Message
+            <textarea rows={5} className="w-full bg-secondary rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-leaf" placeholder={t("contact.form.message")} />
+            <button className="w-full px-5 py-3.5 rounded-xl bg-primary text-primary-foreground font-semibold hover:opacity-90 transition cursor-pointer">
+              {t("contact.form.submit")}
             </button>
-            <a href={waLink} target="_blank" rel="noopener noreferrer" className="flex items-center justify-center gap-2 px-5 py-3.5 rounded-xl bg-lime-gradient text-charcoal font-semibold">
-              <MessageCircle className="size-4" /> Chat on WhatsApp
+            <a href={waLink} target="_blank" rel="noopener noreferrer" className="flex items-center justify-center gap-2 px-5 py-3.5 rounded-xl bg-lime-gradient text-charcoal font-semibold cursor-pointer">
+              <MessageCircle className="size-4" /> WhatsApp
             </a>
           </form>
 

@@ -9,6 +9,8 @@ import leaves from "@/assets/images/leaves.jpg";
 import { Counter } from "@/components/common/Counter";
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
+import { useLanguage } from "@/hooks/use-language";
+import { getLocalizedArticles } from "./knowledge.$slug";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -23,46 +25,44 @@ export const Route = createFileRoute("/")({
   component: HomePage,
 });
 
-const stats = [
-  { n: 100000, s: "+", l: "Happy Farmers" },
-  { n: 3000, s: "+", l: "Dealers" },
-  { n: 300, s: "+", l: "Products" },
-  { n: 250, s: "+", l: "Experts" },
-];
-
-const categories = [
-  { icon: Atom, title: "Chelated Micronutrients", desc: "EDTA-chelated nutrients for maximum absorption.", grad: "from-leaf to-deep" },
-  { icon: Shield, title: "Crop Protectors", desc: "Advanced protection against pests and diseases.", grad: "from-deep to-charcoal" },
-  { icon: Sparkles, title: "Nano Technology", desc: "Next-gen nano formulations for precision farming.", grad: "from-lime to-leaf" },
-  { icon: Droplets, title: "Bio Stimulants", desc: "Natural growth boosters for stronger crops.", grad: "from-leaf to-lime" },
-  { icon: Leaf, title: "Organic Solutions", desc: "Certified organic inputs for sustainable yield.", grad: "from-deep to-leaf" },
-  { icon: FlaskConical, title: "Specialty Fertilizers", desc: "Crop-specific blends developed by our R&D team.", grad: "from-charcoal to-deep" },
-];
-
-const crops = [
-  { name: "Chilli", emoji: "🌶️" },
-  { name: "Paddy", emoji: "🌾" },
-  { name: "Cotton", emoji: "🌿" },
-  { name: "Mango", emoji: "🥭" },
-  { name: "Tomato", emoji: "🍅" },
-  { name: "Citrus", emoji: "🍊" },
-  { name: "Watermelon", emoji: "🍉" },
-  { name: "Cashew", emoji: "🌰" },
-];
-
-const stories = [
-  { name: "Ramesh Patel", crop: "Cotton • Gujarat", quote: "Yield jumped 32% in one season after switching to Signova micronutrients.", img: farmer },
-  { name: "Lakshmi Devi", crop: "Chilli • Andhra Pradesh", quote: "Healthier plants, deeper colour, and a buyer waiting at the gate.", img: farmer },
-  { name: "Suresh Kumar", crop: "Paddy • Telangana", quote: "The team's field guidance is what truly sets Signova apart.", img: farmer },
-];
-
-const articles = [
-  { tag: "Nutrition", title: "Why zinc deficiency silently caps your paddy yield", img: leaves },
-  { tag: "Guide", title: "A 7-step micronutrient plan for chilli farmers", img: heroFarm },
-  { tag: "Innovation", title: "Nano urea: smaller particle, bigger harvest", img: lab },
-];
-
 function HomePage() {
+  const { t, language } = useLanguage();
+
+  const stats = [
+    { n: 100000, s: "+", l: t("home.stats.farmers") },
+    { n: 3000, s: "+", l: t("home.stats.dealers") },
+    { n: 300, s: "+", l: t("home.stats.products") },
+    { n: 250, s: "+", l: t("home.stats.experts") },
+  ];
+
+  const categories = [
+    { icon: Atom, title: t("home.categories.chelated.title"), desc: t("home.categories.chelated.desc"), grad: "from-leaf to-deep" },
+    { icon: Shield, title: t("home.categories.protectors.title"), desc: t("home.categories.protectors.desc"), grad: "from-deep to-charcoal" },
+    { icon: Sparkles, title: t("home.categories.nano.title"), desc: t("home.categories.nano.desc"), grad: "from-lime to-leaf" },
+    { icon: Droplets, title: t("home.categories.bio.title"), desc: t("home.categories.bio.desc"), grad: "from-leaf to-lime" },
+    { icon: Leaf, title: t("home.categories.organic.title"), desc: t("home.categories.organic.desc"), grad: "from-deep to-leaf" },
+    { icon: FlaskConical, title: t("home.categories.specialty.title"), desc: t("home.categories.specialty.desc"), grad: "from-charcoal to-deep" },
+  ];
+
+  const crops = [
+    { name: t("crops.cropsGrid.chilli"), emoji: "🌶️" },
+    { name: t("crops.cropsGrid.paddy"), emoji: "🌾" },
+    { name: t("crops.cropsGrid.cotton"), emoji: "🌿" },
+    { name: t("crops.cropsGrid.mango"), emoji: "🥭" },
+    { name: t("crops.cropsGrid.tomato"), emoji: "🍅" },
+    { name: t("crops.cropsGrid.citrus"), emoji: "🍊" },
+    { name: t("crops.cropsGrid.watermelon"), emoji: "🍉" },
+    { name: t("crops.cropsGrid.cashew"), emoji: "🌰" },
+  ];
+
+  const stories = [
+    { name: "Ramesh Patel", crop: t("home.testimonials.cottonGuj"), quote: t("home.testimonials.rameshQuote"), img: farmer },
+    { name: "Lakshmi Devi", crop: t("home.testimonials.chilliAp"), quote: t("home.testimonials.lakshmiQuote"), img: farmer },
+    { name: "Suresh Kumar", crop: t("home.testimonials.paddyTel"), quote: t("home.testimonials.sureshQuote"), img: farmer },
+  ];
+
+  const localizedArticles = getLocalizedArticles(language).slice(0, 3);
+
   const defaultHeroSettings = {
     layout: "minimalist",
     showSlideNumber: true,
@@ -193,6 +193,13 @@ function HomePage() {
     return titleText;
   };
 
+  const isDefault = activeSlide.id === "default";
+  const slideTitle = isDefault ? t("home.hero.title") : activeSlide.title;
+  const slideSubtitle = isDefault ? t("home.hero.subtitle") : activeSlide.subtitle;
+  const slideEyebrow = isDefault ? t("home.hero.eyebrow") : activeSlide.eyebrow;
+  const primaryBtn = isDefault ? t("home.hero.explore") : activeSlide.primaryBtnText;
+  const secondaryBtn = isDefault ? t("home.hero.becomePartner") : activeSlide.secondaryBtnText;
+
   return (
     <>
       {/* HERO SECTION */}
@@ -267,7 +274,7 @@ function HomePage() {
                 transition={{ duration: 0.6 }}
                 className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full glass-dark text-xs uppercase tracking-[0.25em] text-lime mb-8"
               >
-                <Sparkles className="size-3.5" /> Science • Nutrition • Growth
+                <Sparkles className="size-3.5" /> {slideEyebrow}
               </motion.div>
 
               <motion.h1
@@ -276,7 +283,7 @@ function HomePage() {
                 transition={{ duration: 0.7, delay: 0.1 }}
                 className="text-5xl sm:text-6xl md:text-7xl font-bold leading-[1.05] tracking-tight"
               >
-                {renderTitle(activeSlide.title)}
+                {renderTitle(slideTitle)}
               </motion.h1>
 
               <motion.p
@@ -285,7 +292,7 @@ function HomePage() {
                 transition={{ duration: 0.7, delay: 0.2 }}
                 className="mt-8 text-lg md:text-xl text-white/75 max-w-2xl leading-relaxed"
               >
-                {activeSlide.subtitle}
+                {slideSubtitle}
               </motion.p>
 
               <motion.div
@@ -294,21 +301,21 @@ function HomePage() {
                 transition={{ duration: 0.6, delay: 0.3 }}
                 className="mt-10 flex flex-wrap gap-4 justify-center"
               >
-                {activeSlide.primaryBtnText && (
+                {primaryBtn && (
                   <Link 
                     to={activeSlide.primaryBtnLink} 
-                    className="group inline-flex items-center gap-2 px-7 py-4 rounded-2xl bg-lime-gradient text-charcoal font-semibold shadow-glow hover:scale-[1.02] transition"
+                    className="group inline-flex items-center gap-2 px-7 py-4 rounded-2xl bg-lime-gradient text-charcoal font-semibold shadow-glow hover:scale-[1.02] transition cursor-pointer"
                   >
-                    {activeSlide.primaryBtnText}
+                    {primaryBtn}
                     <ArrowRight className="size-4 group-hover:translate-x-1 transition" />
                   </Link>
                 )}
-                {activeSlide.secondaryBtnText && (
+                {secondaryBtn && (
                   <Link 
                     to={activeSlide.secondaryBtnLink} 
-                    className="inline-flex items-center gap-2 px-7 py-4 rounded-2xl glass-dark text-white font-semibold hover:bg-white/10 transition"
+                    className="inline-flex items-center gap-2 px-7 py-4 rounded-2xl glass-dark text-white font-semibold hover:bg-white/10 transition cursor-pointer"
                   >
-                    <PlayCircle className="size-5" /> {activeSlide.secondaryBtnText}
+                    <PlayCircle className="size-5" /> {secondaryBtn}
                   </Link>
                 )}
               </motion.div>
@@ -326,33 +333,33 @@ function HomePage() {
                 className="space-y-6"
               >
                 <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full glass-dark text-xs uppercase tracking-[0.25em] text-lime">
-                  <Sparkles className="size-3.5" /> Innovation Showcase
+                  <Sparkles className="size-3.5" /> {slideEyebrow}
                 </div>
 
                 <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold leading-[1.05] tracking-tight">
-                  {renderTitle(activeSlide.title)}
+                  {renderTitle(slideTitle)}
                 </h1>
 
                 <p className="text-lg text-white/70 leading-relaxed max-w-xl">
-                  {activeSlide.subtitle}
+                  {slideSubtitle}
                 </p>
 
                 <div className="flex flex-wrap gap-4 pt-4">
-                  {activeSlide.primaryBtnText && (
+                  {primaryBtn && (
                     <Link 
                       to={activeSlide.primaryBtnLink} 
-                      className="group inline-flex items-center gap-2 px-7 py-4 rounded-2xl bg-lime-gradient text-charcoal font-semibold shadow-glow hover:scale-[1.02] transition"
+                      className="group inline-flex items-center gap-2 px-7 py-4 rounded-2xl bg-lime-gradient text-charcoal font-semibold shadow-glow hover:scale-[1.02] transition cursor-pointer"
                     >
-                      {activeSlide.primaryBtnText}
+                      {primaryBtn}
                       <ArrowRight className="size-4 group-hover:translate-x-1 transition" />
                     </Link>
                   )}
-                  {activeSlide.secondaryBtnText && (
+                  {secondaryBtn && (
                     <Link 
                       to={activeSlide.secondaryBtnLink} 
-                      className="inline-flex items-center gap-2 px-7 py-4 rounded-2xl glass-dark text-white font-semibold hover:bg-white/10 transition"
+                      className="inline-flex items-center gap-2 px-7 py-4 rounded-2xl glass-dark text-white font-semibold hover:bg-white/10 transition cursor-pointer"
                     >
-                      <PlayCircle className="size-5" /> {activeSlide.secondaryBtnText}
+                      <PlayCircle className="size-5" /> {secondaryBtn}
                     </Link>
                   )}
                 </div>
@@ -372,7 +379,7 @@ function HomePage() {
                 <div className="relative z-10 aspect-[4/3] w-full rounded-[2.5rem] overflow-hidden border border-white/15 bg-charcoal/50 backdrop-blur-md group">
                   <img 
                     src={bgImage} 
-                    alt={activeSlide.title} 
+                    alt={slideTitle} 
                     className="w-full h-full object-cover scale-100 group-hover:scale-[1.03] transition-transform duration-700 ease-out" 
                   />
                   {/* Subtle Card Dark Overlay */}
@@ -395,37 +402,37 @@ function HomePage() {
                 {/* Pill Eyebrow */}
                 {heroSettings.showSlideNumber !== false && (
                   <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full glass-dark text-xs uppercase tracking-[0.25em] text-lime mb-8">
-                    <Sparkles className="size-3.5" /> {activeSlide.eyebrow || `Slide ${currentSlide + 1} of ${heroSettings.slides.length}`}
+                    <Sparkles className="size-3.5" /> {slideEyebrow || `Slide ${currentSlide + 1} of ${heroSettings.slides.length}`}
                   </div>
                 )}
 
                 {/* Slide Header */}
                 <h1 className="text-5xl sm:text-6xl md:text-8xl font-bold leading-[0.95] max-w-5xl">
-                  {renderTitle(activeSlide.title)}
+                  {renderTitle(slideTitle)}
                 </h1>
 
                 {/* Slide Subtitle */}
                 <p className="mt-8 text-lg md:text-xl text-white/75 max-w-2xl leading-relaxed">
-                  {activeSlide.subtitle}
+                  {slideSubtitle}
                 </p>
 
                 {/* Action Buttons */}
                 <div className="mt-10 flex flex-wrap gap-4">
-                  {activeSlide.primaryBtnText && (
+                  {primaryBtn && (
                     <Link 
                       to={activeSlide.primaryBtnLink} 
-                      className="group inline-flex items-center gap-2 px-7 py-4 rounded-2xl bg-lime-gradient text-charcoal font-semibold shadow-glow hover:scale-[1.02] transition"
+                      className="group inline-flex items-center gap-2 px-7 py-4 rounded-2xl bg-lime-gradient text-charcoal font-semibold shadow-glow hover:scale-[1.02] transition cursor-pointer"
                     >
-                      {activeSlide.primaryBtnText}
+                      {primaryBtn}
                       <ArrowRight className="size-4 group-hover:translate-x-1 transition" />
                     </Link>
                   )}
-                  {activeSlide.secondaryBtnText && (
+                  {secondaryBtn && (
                     <Link 
                       to={activeSlide.secondaryBtnLink} 
-                      className="inline-flex items-center gap-2 px-7 py-4 rounded-2xl glass-dark text-white font-semibold hover:bg-white/10 transition"
+                      className="inline-flex items-center gap-2 px-7 py-4 rounded-2xl glass-dark text-white font-semibold hover:bg-white/10 transition cursor-pointer"
                     >
-                      <PlayCircle className="size-5" /> {activeSlide.secondaryBtnText}
+                      <PlayCircle className="size-5" /> {secondaryBtn}
                     </Link>
                   )}
                 </div>
@@ -442,7 +449,7 @@ function HomePage() {
             {/* Previous Slide Chevron */}
             <button
               onClick={() => setCurrentSlide((prev) => (prev - 1 + heroSettings.slides.length) % heroSettings.slides.length)}
-              className="p-1 rounded-full hover:bg-white/10 text-white/70 hover:text-white transition-all duration-200"
+              className="p-1 rounded-full hover:bg-white/10 text-white/70 hover:text-white transition-all duration-200 cursor-pointer"
               aria-label="Previous slide"
             >
               <ChevronLeft className="size-5" />
@@ -454,7 +461,7 @@ function HomePage() {
                 <button
                   key={index}
                   onClick={() => setCurrentSlide(index)}
-                  className={`h-1.5 transition-all rounded-full ${
+                  className={`h-1.5 transition-all rounded-full cursor-pointer ${
                     currentSlide === index ? "w-5 bg-lime" : "w-1.5 bg-white/40 hover:bg-white/60"
                   }`}
                   aria-label={`Go to slide ${index + 1}`}
@@ -465,7 +472,7 @@ function HomePage() {
             {/* Next Slide Chevron */}
             <button
               onClick={() => setCurrentSlide((prev) => (prev + 1) % heroSettings.slides.length)}
-              className="p-1 rounded-full hover:bg-white/10 text-white/70 hover:text-white transition-all duration-200"
+              className="p-1 rounded-full hover:bg-white/10 text-white/70 hover:text-white transition-all duration-200 cursor-pointer"
               aria-label="Next slide"
             >
               <ChevronRight className="size-5" />
@@ -526,20 +533,18 @@ function HomePage() {
             viewport={{ once: true }}
             transition={{ duration: 0.7 }}
           >
-            <div className="text-xs uppercase tracking-[0.25em] text-leaf font-semibold mb-4">About Signova</div>
+            <div className="text-xs uppercase tracking-[0.25em] text-leaf font-semibold mb-4">{t("home.about.eyebrow")}</div>
             <h2 className="text-4xl md:text-5xl font-bold leading-tight mb-6">
-              Two decades of growing <span className="text-gradient">India's harvests</span>
+              {renderTitle(t("home.about.title"))}
             </h2>
             <p className="text-muted-foreground text-lg leading-relaxed mb-6">
-              Established in 2004, Signova Group is a science-led agri-tech company developing micronutrients,
-              bio-stimulants, and protection chemistries that help farmers grow more — sustainably.
+              {t("home.about.desc1")}
             </p>
             <p className="text-muted-foreground leading-relaxed mb-8">
-              Our mission is simple: put world-class crop science in the hands of every Indian farmer,
-              backed by ISO-certified manufacturing and a 250-strong field expert team.
+              {t("home.about.desc2")}
             </p>
-            <Link to="/about" className="inline-flex items-center gap-2 text-primary font-semibold hover:gap-3 transition-all">
-              Read our story <ArrowRight className="size-4" />
+            <Link to="/about" className="inline-flex items-center gap-2 text-primary font-semibold hover:gap-3 transition-all cursor-pointer">
+              {t("home.about.cta")} <ArrowRight className="size-4" />
             </Link>
           </motion.div>
         </div>
@@ -550,8 +555,8 @@ function HomePage() {
         <div className="absolute top-0 right-0 size-96 rounded-full bg-lime/10 blur-3xl" />
         <div className="relative max-w-7xl mx-auto px-6">
           <div className="text-center mb-16">
-            <div className="text-xs uppercase tracking-[0.25em] text-leaf font-semibold mb-3">What We Make</div>
-            <h2 className="text-4xl md:text-6xl font-bold">Product <span className="text-gradient">Categories</span></h2>
+            <div className="text-xs uppercase tracking-[0.25em] text-leaf font-semibold mb-3">{t("home.categories.eyebrow")}</div>
+            <h2 className="text-4xl md:text-6xl font-bold">{renderTitle(t("home.categories.title"))}</h2>
           </div>
 
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -570,8 +575,8 @@ function HomePage() {
                 </div>
                 <h3 className="relative text-xl font-bold mb-3">{c.title}</h3>
                 <p className="relative text-muted-foreground text-sm leading-relaxed mb-6">{c.desc}</p>
-                <Link to="/products" className="relative inline-flex items-center gap-1 text-sm font-semibold text-primary group-hover:gap-2 transition-all">
-                  Learn more <ChevronRight className="size-4" />
+                <Link to="/products" className="relative inline-flex items-center gap-1 text-sm font-semibold text-primary group-hover:gap-2 transition-all cursor-pointer">
+                  {t("home.categories.learnMore")} <ChevronRight className="size-4" />
                 </Link>
               </motion.div>
             ))}
@@ -584,11 +589,11 @@ function HomePage() {
         <div className="max-w-7xl mx-auto px-6">
           <div className="flex flex-col md:flex-row md:items-end justify-between mb-14 gap-6">
             <div>
-              <div className="text-xs uppercase tracking-[0.25em] text-leaf font-semibold mb-3">Crop Solutions</div>
-              <h2 className="text-4xl md:text-6xl font-bold max-w-2xl">Tailored science for <span className="text-gradient">every crop</span></h2>
+              <div className="text-xs uppercase tracking-[0.25em] text-leaf font-semibold mb-3">{t("home.crops.eyebrow")}</div>
+              <h2 className="text-4xl md:text-6xl font-bold max-w-2xl">{renderTitle(t("home.crops.title"))}</h2>
             </div>
-            <Link to="/crops" className="inline-flex items-center gap-2 text-primary font-semibold">
-              View all crops <ArrowRight className="size-4" />
+            <Link to="/crops" className="inline-flex items-center gap-2 text-primary font-semibold cursor-pointer">
+              {t("home.crops.cta")} <ArrowRight className="size-4" />
             </Link>
           </div>
 
@@ -603,7 +608,7 @@ function HomePage() {
               >
                 <Link
                   to="/crops"
-                  className="group block aspect-square rounded-3xl bg-gradient-to-br from-secondary to-card border border-border p-6 hover:border-leaf hover:shadow-glow transition-all hover:-translate-y-1 relative overflow-hidden"
+                  className="group block aspect-square rounded-3xl bg-gradient-to-br from-secondary to-card border border-border p-6 hover:border-leaf hover:shadow-glow transition-all hover:-translate-y-1 relative overflow-hidden cursor-pointer"
                 >
                   <div className="absolute inset-0 bg-lime-gradient opacity-0 group-hover:opacity-10 transition" />
                   <div className="relative h-full flex flex-col justify-between">
@@ -632,20 +637,19 @@ function HomePage() {
 
         <div className="relative max-w-7xl mx-auto px-6 grid lg:grid-cols-2 gap-16 items-center">
           <div>
-            <div className="text-xs uppercase tracking-[0.25em] text-lime font-semibold mb-4">Innovation Lab</div>
+            <div className="text-xs uppercase tracking-[0.25em] text-lime font-semibold mb-4">{t("home.innovation.eyebrow")}</div>
             <h2 className="text-4xl md:text-6xl font-bold leading-tight mb-6">
-              Research that grows <span className="text-gradient">tomorrow's harvest</span>
+              {renderTitle(t("home.innovation.title"))}
             </h2>
             <p className="text-white/70 text-lg leading-relaxed mb-10 max-w-lg">
-              Our 30+ scientist R&D centre develops chelation chemistries, nano formulations, and bio-stimulants
-              with rigorous quality control and ISO 9001:2015 certification.
+              {t("home.innovation.desc")}
             </p>
             <div className="grid grid-cols-2 gap-4">
               {[
-                { k: "ISO Certified", v: "9001:2015" },
-                { k: "Patents Filed", v: "12+" },
-                { k: "Field Trials", v: "500+" },
-                { k: "Quality Tests", v: "Daily" },
+                { k: t("home.innovation.stats.iso"), v: t("home.innovation.stats.isoVal") },
+                { k: t("home.innovation.stats.patents"), v: t("home.innovation.stats.patentsVal") },
+                { k: t("home.innovation.stats.trials"), v: t("home.innovation.stats.trialsVal") },
+                { k: t("home.innovation.stats.tests"), v: t("home.innovation.stats.testsVal") },
               ].map((x) => (
                 <div key={x.k} className="glass-dark rounded-2xl p-5">
                   <div className="text-2xl font-bold text-gradient">{x.v}</div>
@@ -653,8 +657,8 @@ function HomePage() {
                 </div>
               ))}
             </div>
-            <Link to="/innovation" className="inline-flex items-center gap-2 mt-10 px-6 py-3 rounded-2xl bg-lime-gradient text-charcoal font-semibold">
-              Inside our R&D <ArrowRight className="size-4" />
+            <Link to="/innovation" className="inline-flex items-center gap-2 mt-10 px-6 py-3 rounded-2xl bg-lime-gradient text-charcoal font-semibold cursor-pointer">
+              {t("home.innovation.cta")} <ArrowRight className="size-4" />
             </Link>
           </div>
 
@@ -674,8 +678,8 @@ function HomePage() {
       <section className="py-28">
         <div className="max-w-7xl mx-auto px-6">
           <div className="text-center mb-16">
-            <div className="text-xs uppercase tracking-[0.25em] text-leaf font-semibold mb-3">Farmer Stories</div>
-            <h2 className="text-4xl md:text-6xl font-bold">Yields that speak <span className="text-gradient">for themselves</span></h2>
+            <div className="text-xs uppercase tracking-[0.25em] text-leaf font-semibold mb-3">{t("home.testimonials.eyebrow")}</div>
+            <h2 className="text-4xl md:text-6xl font-bold">{renderTitle(t("home.testimonials.title"))}</h2>
           </div>
           <div className="grid md:grid-cols-3 gap-6">
             {stories.map((s, i) => (
@@ -713,15 +717,20 @@ function HomePage() {
           <div className="absolute -top-40 -right-40 size-96 rounded-full bg-lime-gradient opacity-30 blur-3xl" />
           <div className="relative grid md:grid-cols-2 gap-10 items-center">
             <div>
-              <div className="text-xs uppercase tracking-[0.25em] text-lime font-semibold mb-4">Partner Programme</div>
+              <div className="text-xs uppercase tracking-[0.25em] text-lime font-semibold mb-4">{t("home.distributorCta.eyebrow")}</div>
               <h2 className="text-4xl md:text-5xl font-bold leading-tight mb-5">
-                Grow your business with <span className="text-gradient">India's premium agri-brand</span>
+                {renderTitle(t("home.distributorCta.title"))}
               </h2>
               <p className="text-white/75 mb-8 max-w-md">
-                Industry-leading margins, exclusive territories, marketing collateral and full agronomy support.
+                {t("home.distributorCta.desc")}
               </p>
               <div className="space-y-3">
-                {["High margin structure", "Dedicated territory manager", "Co-branded marketing", "Tech & training support"].map((b) => (
+                {[
+                  t("home.distributorCta.bullet1"),
+                  t("home.distributorCta.bullet2"),
+                  t("home.distributorCta.bullet3"),
+                  t("home.distributorCta.bullet4")
+                ].map((b) => (
                   <div key={b} className="flex items-center gap-3 text-sm">
                     <div className="size-6 rounded-full bg-lime-gradient grid place-items-center text-charcoal font-bold">✓</div>
                     {b}
@@ -730,13 +739,13 @@ function HomePage() {
               </div>
             </div>
             <div className="glass-dark rounded-3xl p-8">
-              <h3 className="text-xl font-bold mb-5">Quick enquiry</h3>
+              <h3 className="text-xl font-bold mb-5">{t("home.distributorCta.enquiryTitle")}</h3>
               <form className="space-y-3" onSubmit={(e) => e.preventDefault()}>
-                <input className="w-full bg-white/10 rounded-xl px-4 py-3 text-sm border border-white/15 placeholder:text-white/50 focus:outline-none focus:border-lime" placeholder="Your name" />
-                <input className="w-full bg-white/10 rounded-xl px-4 py-3 text-sm border border-white/15 placeholder:text-white/50 focus:outline-none focus:border-lime" placeholder="Phone number" />
-                <input className="w-full bg-white/10 rounded-xl px-4 py-3 text-sm border border-white/15 placeholder:text-white/50 focus:outline-none focus:border-lime" placeholder="District / State" />
-                <button className="w-full px-5 py-3.5 rounded-xl bg-lime-gradient text-charcoal font-semibold hover:scale-[1.01] transition">
-                  Apply Now
+                <input className="w-full bg-white/10 rounded-xl px-4 py-3 text-sm border border-white/15 placeholder:text-white/50 focus:outline-none focus:border-lime" placeholder={t("home.distributorCta.namePlaceholder")} />
+                <input className="w-full bg-white/10 rounded-xl px-4 py-3 text-sm border border-white/15 placeholder:text-white/50 focus:outline-none focus:border-lime" placeholder={t("home.distributorCta.phonePlaceholder")} />
+                <input className="w-full bg-white/10 rounded-xl px-4 py-3 text-sm border border-white/15 placeholder:text-white/50 focus:outline-none focus:border-lime" placeholder={t("home.distributorCta.locationPlaceholder")} />
+                <button className="w-full px-5 py-3.5 rounded-xl bg-lime-gradient text-charcoal font-semibold hover:scale-[1.01] transition cursor-pointer">
+                  {t("home.distributorCta.submit")}
                 </button>
               </form>
             </div>
@@ -749,26 +758,27 @@ function HomePage() {
         <div className="max-w-7xl mx-auto px-6">
           <div className="flex flex-col md:flex-row md:items-end justify-between mb-14 gap-6">
             <div>
-              <div className="text-xs uppercase tracking-[0.25em] text-leaf font-semibold mb-3">Knowledge Centre</div>
-              <h2 className="text-4xl md:text-6xl font-bold">Insights from the <span className="text-gradient">field & lab</span></h2>
+              <div className="text-xs uppercase tracking-[0.25em] text-leaf font-semibold mb-3">{t("home.knowledge.eyebrow")}</div>
+              <h2 className="text-4xl md:text-6xl font-bold">{renderTitle(t("home.knowledge.title"))}</h2>
             </div>
-            <Link to="/knowledge" className="inline-flex items-center gap-2 text-primary font-semibold">
-              All articles <ArrowRight className="size-4" />
+            <Link to="/knowledge" className="inline-flex items-center gap-2 text-primary font-semibold cursor-pointer">
+              {t("home.knowledge.cta")} <ArrowRight className="size-4" />
             </Link>
           </div>
           <div className="grid md:grid-cols-3 gap-6">
-            {articles.map((a, i) => (
+            {localizedArticles.map((a, i) => (
               <Link
                 key={i}
-                to="/knowledge"
-                className="group block bg-card rounded-3xl overflow-hidden shadow-card hover:shadow-glow transition hover:-translate-y-1"
+                to="/knowledge/$slug"
+                params={{ slug: a.slug }}
+                className="group block bg-card rounded-3xl overflow-hidden shadow-card hover:shadow-glow transition hover:-translate-y-1 cursor-pointer"
               >
                 <div className="aspect-[4/3] overflow-hidden">
                   <img src={a.img} alt={a.title} loading="lazy" className="w-full h-full object-cover group-hover:scale-105 transition duration-700" />
                 </div>
                 <div className="p-6">
                   <div className="text-xs uppercase tracking-wider text-leaf font-semibold mb-3">{a.tag}</div>
-                  <h3 className="text-lg font-bold leading-snug group-hover:text-primary transition">{a.title}</h3>
+                  <h3 className="text-lg font-bold leading-snug group-hover:text-primary transition leading-relaxed">{a.title}</h3>
                 </div>
               </Link>
             ))}

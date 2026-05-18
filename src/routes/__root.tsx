@@ -7,6 +7,8 @@ import { ThemeProvider } from "@/hooks/use-theme";
 import { useChatModal } from "@/lib/chat-modal";
 import { AiChat } from "./ai-chat";
 
+import { LanguageProvider } from "@/hooks/use-language";
+
 function NotFoundComponent() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
@@ -37,22 +39,24 @@ function RootComponent() {
   const [isOpen, setIsOpen] = useChatModal();
 
   return (
-    <ThemeProvider>
-      <div className="min-h-screen flex flex-col w-full overflow-x-hidden">
-        <Navbar />
-        <main className="flex-1">
-          <Outlet />
-        </main>
-        <Footer />
-        {!isChatPage && <WhatsAppFab />}
-        {!isChatPage && <AiChatFab />}
+    <LanguageProvider>
+      <ThemeProvider>
+        <div className="min-h-screen flex flex-col w-full overflow-x-hidden">
+          <Navbar />
+          <main className="flex-1">
+            <Outlet />
+          </main>
+          <Footer />
+          {!isChatPage && <WhatsAppFab />}
+          {!isChatPage && <AiChatFab />}
 
-        {/* Global Floating AI Crop Advisor Dialog Overlay */}
-        {isOpen && !isChatPage && (
-          <AiChat isModal={true} onClose={() => setIsOpen(false)} />
-        )}
-      </div>
-    </ThemeProvider>
+          {/* Global Floating AI Crop Advisor Dialog Overlay */}
+          {isOpen && !isChatPage && (
+            <AiChat isModal={true} onClose={() => setIsOpen(false)} />
+          )}
+        </div>
+      </ThemeProvider>
+    </LanguageProvider>
   );
 }
 
