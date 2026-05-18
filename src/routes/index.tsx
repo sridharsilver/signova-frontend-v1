@@ -63,13 +63,17 @@ const articles = [
 ];
 
 function HomePage() {
-  const [heroSettings, setHeroSettings] = useState({
+  const defaultHeroSettings = {
     layout: "minimalist",
+    showSlideNumber: true,
+    showControls: true,
+    autoplayInterval: 5,
     slides: [
       {
         id: "default",
         title: "Redefining {Crop Nutrition} with Science & Innovation",
         subtitle: "Advanced micronutrients and crop solutions trusted by thousands of farmers across India.",
+        eyebrow: "Science • Nutrition • Growth",
         image: heroFarm,
         primaryBtnText: "Explore Products",
         primaryBtnLink: "/products",
@@ -77,6 +81,13 @@ function HomePage() {
         secondaryBtnLink: "/distributor"
       }
     ]
+  };
+
+  const [heroSettings, setHeroSettings] = useState<any>({
+    layout: null, // Start as null to prevent flashing minimalist layout on refresh!
+    showSlideNumber: true,
+    showControls: true,
+    slides: defaultHeroSettings.slides
   });
 
   const [currentSlide, setCurrentSlide] = useState(0);
@@ -98,29 +109,35 @@ function HomePage() {
             const parsed = JSON.parse(local);
             if (parsed.hero && parsed.hero.slides && parsed.hero.slides.length > 0) {
               setHeroSettings(parsed.hero);
+              return;
             }
           }
+          setHeroSettings(defaultHeroSettings);
         } else if (data && data.value && data.value.slides && data.value.slides.length > 0) {
           setHeroSettings(data.value);
+        } else {
+          setHeroSettings(defaultHeroSettings);
         }
       } catch (err) {
         console.warn("Failed to load dynamic hero settings, falling back.", err);
+        setHeroSettings(defaultHeroSettings);
       }
     }
 
     fetchHeroSettings();
   }, []);
 
-  // 2. Setup sliding interval (e.g. 6 seconds) when layout is 'slider'
+  // 2. Setup sliding interval (dynamic slide duration) when layout is 'slider'
   useEffect(() => {
     if (heroSettings.layout !== "slider" || heroSettings.slides.length <= 1) return;
     
+    const duration = (heroSettings.autoplayInterval || 5) * 1000;
     const interval = setInterval(() => {
       setCurrentSlide((prev) => (prev + 1) % heroSettings.slides.length);
-    }, 6000);
+    }, duration);
 
     return () => clearInterval(interval);
-  }, [heroSettings.layout, heroSettings.slides.length]);
+  }, [heroSettings.layout, heroSettings.slides.length, heroSettings.autoplayInterval]);
 
   const activeSlide = heroSettings.slides[currentSlide] || heroSettings.slides[0];
 
@@ -217,6 +234,29 @@ function HomePage() {
 
         <div className="relative max-w-7xl mx-auto px-6 py-20 w-full text-white z-20">
           
+          {/* 0. PREMIUM HERO LOADING SKELETON (To prevent layout shift / flash on refresh!) */}
+          {heroSettings.layout === null && (
+            <div className="flex flex-col items-center text-center max-w-4xl mx-auto py-12 space-y-8 animate-pulse">
+              {/* Eyebrow Pill Shimmer */}
+              <div className="h-7 w-48 bg-white/10 rounded-full" />
+              {/* Title Shimmer */}
+              <div className="space-y-3 w-full">
+                <div className="h-14 sm:h-16 w-11/12 bg-white/10 rounded-2xl mx-auto" />
+                <div className="h-14 sm:h-16 w-3/4 bg-white/10 rounded-2xl mx-auto" />
+              </div>
+              {/* Subtitle Shimmer */}
+              <div className="space-y-2 w-full max-w-2xl pt-2">
+                <div className="h-5 w-full bg-white/10 rounded-lg" />
+                <div className="h-5 w-5/6 bg-white/10 rounded-lg mx-auto" />
+              </div>
+              {/* Buttons Shimmer */}
+              <div className="flex flex-wrap gap-4 justify-center pt-6">
+                <div className="h-14 w-40 bg-white/10 rounded-2xl" />
+                <div className="h-14 w-44 bg-white/10 rounded-2xl" />
+              </div>
+            </div>
+          )}
+
           {/* 1. MINIMALIST LAYOUT (Center-aligned Copy) */}
           {heroSettings.layout === "minimalist" && (
             <div className="flex flex-col items-center text-center max-w-4xl mx-auto">
@@ -352,9 +392,11 @@ function HomePage() {
                 transition={{ duration: 0.6, ease: "easeOut" }}
               >
                 {/* Pill Eyebrow */}
-                <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full glass-dark text-xs uppercase tracking-[0.25em] text-lime mb-8">
-                  <Sparkles className="size-3.5" /> Slide {currentSlide + 1} of {heroSettings.slides.length}
-                </div>
+                {heroSettings.showSlideNumber !== false && (
+                  <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full glass-dark text-xs uppercase tracking-[0.25em] text-lime mb-8">
+                    <Sparkles className="size-3.5" /> {activeSlide.eyebrow || `Slide ${currentSlide + 1} of ${heroSettings.slides.length}`}
+                  </div>
+                )}
 
                 {/* Slide Header */}
                 <h1 className="text-5xl sm:text-6xl md:text-8xl font-bold leading-[0.95] max-w-5xl">
@@ -392,7 +434,7 @@ function HomePage() {
 
         </div>
         {/* Unified Slider Navigation Deck (Grouped at the bottom-center, stacked perfectly above the scroll indicator) */}
-        {heroSettings.layout === "slider" && heroSettings.slides.length > 1 && (
+        {heroSettings.layout === "slider" && heroSettings.slides.length > 1 && heroSettings.showControls !== false && (
           <div className="absolute bottom-32 left-1/2 -translate-x-1/2 z-30 flex items-center gap-5 glass px-4 py-2 rounded-full border border-white/10 shadow-glow-lime/5">
             {/* Previous Slide Chevron */}
             <button

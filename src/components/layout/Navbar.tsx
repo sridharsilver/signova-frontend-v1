@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import { Menu, X, ChevronDown } from "lucide-react";
 import logo from "@/assets/images/signova-logo.png";
 import { ThemeToggle } from "./ThemeToggle";
+import { chatModalStore } from "@/lib/chat-modal";
 
 type SubLink = { to: string; label: string; desc?: string };
 type NavItem = { label: string; to?: string; children?: SubLink[] };
@@ -23,6 +24,7 @@ const nav: NavItem[] = [
       { to: "/products", label: "Products", desc: "Micronutrients, bio & nano-tech" },
       { to: "/crops", label: "Crop Programs", desc: "Tailored crop nutrition" },
       { to: "/knowledge", label: "Knowledge Centre", desc: "Guides, blogs & research" },
+      { to: "/ai-chat", label: "AI Crop Advisor", desc: "Multilingual expert crop help" },
     ],
   },
   {
@@ -116,6 +118,13 @@ export function Navbar() {
                             <Link
                               key={c.to}
                               to={c.to}
+                              onClick={(e) => {
+                                if (c.to === "/ai-chat") {
+                                  e.preventDefault();
+                                  chatModalStore.setOpen(true);
+                                  setOpenMenu(null);
+                                }
+                              }}
                               className={`block rounded-xl px-3 py-2.5 transition ${
                                 childActive
                                   ? "bg-secondary"
@@ -198,6 +207,13 @@ export function Navbar() {
                           <Link
                             key={c.to}
                             to={c.to}
+                            onClick={(e) => {
+                              if (c.to === "/ai-chat") {
+                                e.preventDefault();
+                                chatModalStore.setOpen(true);
+                                setOpen(false);
+                              }
+                            }}
                             className="px-3 py-2 rounded-lg text-sm hover:bg-secondary"
                           >
                             {c.label}

@@ -1,8 +1,11 @@
-import { Outlet, Link, createRootRoute } from "@tanstack/react-router";
+import { Outlet, Link, createRootRoute, useLocation } from "@tanstack/react-router";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
 import { WhatsAppFab } from "@/components/layout/WhatsAppFab";
+import { AiChatFab } from "@/components/layout/AiChatFab";
 import { ThemeProvider } from "@/hooks/use-theme";
+import { useChatModal } from "@/lib/chat-modal";
+import { AiChat } from "./ai-chat";
 
 function NotFoundComponent() {
   return (
@@ -29,6 +32,10 @@ export const Route = createRootRoute({
 });
 
 function RootComponent() {
+  const location = useLocation();
+  const isChatPage = location.pathname === "/ai-chat";
+  const [isOpen, setIsOpen] = useChatModal();
+
   return (
     <ThemeProvider>
       <div className="min-h-screen flex flex-col w-full overflow-x-hidden">
@@ -37,8 +44,15 @@ function RootComponent() {
           <Outlet />
         </main>
         <Footer />
-        <WhatsAppFab />
+        {!isChatPage && <WhatsAppFab />}
+        {!isChatPage && <AiChatFab />}
+
+        {/* Global Floating AI Crop Advisor Dialog Overlay */}
+        {isOpen && !isChatPage && (
+          <AiChat isModal={true} onClose={() => setIsOpen(false)} />
+        )}
       </div>
     </ThemeProvider>
   );
 }
+
