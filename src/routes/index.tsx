@@ -486,7 +486,7 @@ function HomePage() {
         </div>
         {/* Unified Slider Navigation Deck (Grouped at the bottom-center, stacked perfectly above the scroll indicator) */}
         {heroSettings.layout === "slider" && heroSettings.slides.length > 1 && heroSettings.showControls !== false && (
-          <div className={`absolute bottom-32 left-1/2 -translate-x-1/2 z-30 items-center gap-5 glass px-4 py-2 rounded-full border border-white/10 shadow-glow-lime/5 flex ${
+          <div className={`absolute bottom-32 left-1/2 -translate-x-1/2 z-30 items-center gap-5 glass-dark px-4 py-2 rounded-full border border-white/10 shadow-glow-lime/5 flex ${
             heroSettings.showControlsMobile === false ? "mobile-controls-hidden" : ""
           }`}>
             {/* Previous Slide Chevron */}

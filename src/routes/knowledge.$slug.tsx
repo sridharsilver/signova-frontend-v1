@@ -121,15 +121,39 @@ export const Route = createFileRoute("/knowledge/$slug")({
   loader: ({ params }) => {
     return { slug: params.slug };
   },
-  head: ({ loaderData }) =>
-    loaderData?.slug
-      ? {
-          meta: [
-            { title: "Signova Knowledge Centre" },
-            { name: "description", content: "Agronomy guides & research insights" },
-          ],
+  head: ({ loaderData }) => {
+    const slug = loaderData?.slug;
+    if (!slug) return {};
+
+    let lang = "en";
+    if (typeof window !== "undefined") {
+      try {
+        const saved = localStorage.getItem("signova_chat_lang");
+        if (saved && ["en", "hi", "te", "gu", "mr", "ta", "kn"].includes(saved)) {
+          lang = saved;
         }
-      : {},
+      } catch {}
+    }
+
+    const article = getLocalizedArticles(lang).find((a) => a.slug === slug);
+    if (!article) {
+      return {
+        meta: [
+          { title: "Article Not Found — Signova Knowledge Centre" },
+        ],
+      };
+    }
+
+    return {
+      meta: [
+        { title: `${article.title} — Signova Knowledge Centre` },
+        { name: "description", content: article.excerpt },
+        { property: "og:title", content: article.title },
+        { property: "og:description", content: article.excerpt },
+        { property: "og:image", content: article.img },
+      ],
+    };
+  },
   notFoundComponent: () => (
     <div className="min-h-screen grid place-items-center px-6">
       <div className="text-center">

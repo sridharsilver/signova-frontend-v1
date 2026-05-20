@@ -34,6 +34,7 @@
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
+  --color-primary-text: var(--primary-text);
 
   --color-lime: var(--lime);
   --color-leaf: var(--leaf);
@@ -82,6 +83,7 @@
   --gradient-glow: radial-gradient(circle at 30% 20%, oklch(0.32 0.09 145 / 0.35), transparent 60%);
   --shadow-glow: 0 20px 60px -20px oklch(0.32 0.09 145 / 0.45);
   --shadow-card: 0 10px 40px -15px oklch(0.32 0.09 145 / 0.18);
+  --primary-text: var(--primary-text-light, oklch(0.32 0.09 145));
 }
 
 .dark {
@@ -103,6 +105,7 @@
   --input: oklch(1 0 0 / 12%);
   --ring: oklch(0.82 0.21 128);
   --gradient-lime: linear-gradient(135deg, oklch(0.82 0.21 128), oklch(0.55 0.15 142));
+  --primary-text: var(--primary-text-dark, var(--primary));
 }
 
 @keyframes fade-in {

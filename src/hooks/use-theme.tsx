@@ -16,10 +16,15 @@ function getInitialTheme(): Theme {
     try {
       const saved = localStorage.getItem("theme");
       if (saved === "light" || saved === "dark") return saved;
+
+      const cached = localStorage.getItem("signova_frontend_settings");
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        if (parsed.theme && typeof parsed.theme.darkMode === "boolean") {
+          return parsed.theme.darkMode ? "dark" : "light";
+        }
+      }
     } catch {}
-  }
-  if (typeof document !== "undefined" && document.documentElement.classList.contains("dark")) {
-    return "dark";
   }
   return "dark";
 }
@@ -45,6 +50,43 @@ function lightenColor(hex: string, percent: number): string {
   }
 }
 
+function darkenColor(hex: string, percent: number): string {
+  try {
+    let color = hex.replace("#", "");
+    if (color.length === 3) {
+      color = color[0] + color[0] + color[1] + color[1] + color[2] + color[2];
+    }
+    const num = parseInt(color, 16);
+    let r = (num >> 16) - Math.round(2.55 * percent);
+    let g = ((num >> 8) & 0x00ff) - Math.round(2.55 * percent);
+    let b = (num & 0x0000ff) - Math.round(2.55 * percent);
+
+    r = Math.min(255, Math.max(0, r));
+    g = Math.min(255, Math.max(0, g));
+    b = Math.min(255, Math.max(0, b));
+
+    return "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
+  } catch {
+    return hex;
+  }
+}
+
+function isColorLight(hex: string): boolean {
+  try {
+    let color = hex.replace("#", "");
+    if (color.length === 3) {
+      color = color[0] + color[0] + color[1] + color[1] + color[2] + color[2];
+    }
+    const r = parseInt(color.slice(0, 2), 16);
+    const g = parseInt(color.slice(2, 4), 16);
+    const b = parseInt(color.slice(4, 6), 16);
+    const hsp = Math.sqrt(0.299 * (r * r) + 0.587 * (g * g) + 0.114 * (b * b));
+    return hsp > 150;
+  } catch {
+    return false;
+  }
+}
+
 function applyDynamicTheme(config: any) {
   if (typeof window === "undefined" || !config) return;
 
@@ -54,10 +96,19 @@ function applyDynamicTheme(config: any) {
   const primary = config.primaryColor || "#84cc16";
   const secondary = config.secondaryColor || "#0c0a09";
   const lightenedPrimary = lightenColor(primary, 25);
+  const darkenedPrimary = darkenColor(primary, 40);
 
   root.style.setProperty("--primary", primary);
   root.style.setProperty("--leaf", primary);
   root.style.setProperty("--lime", secondary && secondary !== "#0c0a09" ? secondary : lightenedPrimary);
+
+  // Set readable foreground color for primary background dynamically
+  const isLight = isColorLight(primary);
+  root.style.setProperty("--primary-foreground", isLight ? "#18181b" : "#ffffff");
+
+  // Dynamic high-contrast text color based on active theme
+  root.style.setProperty("--primary-text-light", darkenedPrimary);
+  root.style.setProperty("--primary-text-dark", primary);
 
   // 2. Dynamic Gradients
   root.style.setProperty(
@@ -111,6 +162,9 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
         const parsed = JSON.parse(localSettings);
         if (parsed.theme) {
           applyDynamicTheme(parsed.theme);
+          if (!localStorage.getItem("theme") && typeof parsed.theme.darkMode === "boolean") {
+            setThemeState(parsed.theme.darkMode ? "dark" : "light");
+          }
         }
       } catch (err) {
         console.warn("Failed to parse cached theme", err);
@@ -128,6 +182,9 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
 
         if (!error && data && data.value) {
           applyDynamicTheme(data.value);
+          if (!localStorage.getItem("theme") && typeof data.value.darkMode === "boolean") {
+            setThemeState(data.value.darkMode ? "dark" : "light");
+          }
 
           // Update cache
           const localSettingsRaw = localStorage.getItem("signova_frontend_settings") || "{}";

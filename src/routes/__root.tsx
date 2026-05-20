@@ -1,4 +1,4 @@
-import { Outlet, Link, createRootRoute, useLocation } from "@tanstack/react-router";
+import { Outlet, Link, createRootRoute, useLocation, HeadContent } from "@tanstack/react-router";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
 import { WhatsAppFab } from "@/components/layout/WhatsAppFab";
@@ -42,6 +42,7 @@ function RootComponent() {
   return (
     <LanguageProvider>
       <ThemeProvider>
+        <HeadContent />
         <div className="min-h-screen flex flex-col w-full overflow-x-hidden">
           <Navbar />
           <main className="flex-1">
