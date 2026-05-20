@@ -7,6 +7,7 @@ import {
   ChevronLeft, ChevronRight, Volume2, VolumeX, Mic, MicOff, Loader2
 } from "lucide-react";
 import { toast } from "sonner";
+import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
@@ -263,10 +264,43 @@ export function AiChat({ isModal = false, onClose }: { isModal?: boolean; onClos
   
   // Voice & Interaction states
   const [isMuted, setIsMuted] = useState(() => {
-    return localStorage.getItem("signova_chat_muted") === "true";
+    const saved = localStorage.getItem("signova_chat_muted");
+    if (saved !== null) {
+      return saved === "true";
+    }
+    try {
+      const local = localStorage.getItem("signova_frontend_settings");
+      if (local) {
+        const parsed = JSON.parse(local);
+        if (parsed.theme && parsed.theme.muteSpeechByDefault !== undefined) {
+          return parsed.theme.muteSpeechByDefault === true;
+        }
+      }
+    } catch (e) {}
+    return true; // Default to true (disabled)
   });
   const [isListening, setIsListening] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
+
+  useEffect(() => {
+    async function fetchSpeechSettings() {
+      if (localStorage.getItem("signova_chat_muted") !== null) return;
+      try {
+        const { data, error } = await supabase
+          .from("frontend_settings")
+          .select("*")
+          .eq("key", "theme")
+          .single();
+
+        if (!error && data && data.value && data.value.muteSpeechByDefault !== undefined) {
+          setIsMuted(data.value.muteSpeechByDefault === true);
+        }
+      } catch (err) {
+        console.warn("Failed to fetch brand speech settings", err);
+      }
+    }
+    fetchSpeechSettings();
+  }, []);
 
   // Modal Resizing States & Handlers
   const [modalSize, setModalSize] = useState(() => {

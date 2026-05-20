@@ -85,7 +85,7 @@ export function AiChatFab() {
       dragConstraints={dragConstraints}
       dragElastic={0.15}
       dragMomentum={false}
-      className="fixed bottom-6 right-6 z-40 flex items-center gap-3 touch-none select-none"
+      className="fixed bottom-6 right-6 z-[99] flex items-center gap-3 touch-none select-none"
     >
       {/* Dynamic Hint Tooltip */}
       <div 
