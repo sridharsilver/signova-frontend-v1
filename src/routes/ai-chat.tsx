@@ -314,8 +314,8 @@ export function AiChat({ isModal = false, onClose }: { isModal?: boolean; onClos
         };
       }
     } catch (e) {}
-    // Default to 40% of viewport width and 60% of viewport height on desktop
-    const defaultWidth = typeof window !== "undefined" ? Math.max(350, Math.round(window.innerWidth * 0.40)) : 400;
+    // Default to 400px width and 60% of viewport height on desktop
+    const defaultWidth = 400;
     const defaultHeight = typeof window !== "undefined" ? Math.max(450, Math.round(window.innerHeight * 0.60)) : 600;
     return { width: defaultWidth, height: defaultHeight };
   });
@@ -922,7 +922,7 @@ export function AiChat({ isModal = false, onClose }: { isModal?: boolean; onClos
         </div>
 
         {/* Messages view */}
-        <div ref={chatContainerRef} className="flex-1 overflow-y-auto p-5 sm:p-6 space-y-4 chat-scrollbar">
+        <div ref={chatContainerRef} className="flex-1 overflow-y-auto pl-5 pr-2.5 py-5 sm:pl-6 sm:pr-3.5 sm:py-6 space-y-4 chat-scrollbar">
           <AnimatePresence initial={false}>
             {messages.map((msg, index) => {
               const isBot = msg.sender === "bot";
