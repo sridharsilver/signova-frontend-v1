@@ -1,8 +1,8 @@
 import { useChatModal } from "@/lib/chat-modal";
 import { Sparkles, X } from "lucide-react";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { supabase } from "@/lib/supabase";
-import { motion, AnimatePresence, useMotionValue } from "framer-motion";
+import { motion, AnimatePresence, useMotionValue, animate } from "framer-motion";
 
 export function AiChatFab() {
   const [showTooltip, setShowTooltip] = useState(false);
@@ -89,6 +89,20 @@ export function AiChatFab() {
 
   const dragX = useMotionValue(initialX);
   const dragY = useMotionValue(initialY);
+
+  const prevIsOpen = useRef(isOpen);
+  useEffect(() => {
+    if (prevIsOpen.current && !isOpen) {
+      // Transitioned from open to closed!
+      animate(dragX, 0, { type: "spring", stiffness: 200, damping: 25 });
+      animate(dragY, 0, { type: "spring", stiffness: 200, damping: 25 });
+      try {
+        sessionStorage.setItem("signova_fab_drag_x", "0");
+        sessionStorage.setItem("signova_fab_drag_y", "0");
+      } catch (e) {}
+    }
+    prevIsOpen.current = isOpen;
+  }, [isOpen, dragX, dragY]);
 
   const handleDragEnd = () => {
     try {
