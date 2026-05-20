@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 import { translations } from "@/lib/translations";
+import { supabase } from "@/lib/supabase";
 
 export type LanguageKey = "en" | "hi" | "te" | "gu" | "mr" | "ta" | "kn";
 
@@ -23,6 +24,8 @@ type LanguageContextType = {
   language: LanguageKey;
   setLanguage: (lang: LanguageKey) => void;
   t: (key: string, fallback?: string) => string;
+  enabledLanguages: LanguageKey[];
+  showLanguageSelector: boolean;
 };
 
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
@@ -34,18 +37,102 @@ function getInitialLanguage(): LanguageKey {
     if (saved && ["en", "hi", "te", "gu", "mr", "ta", "kn"].includes(saved)) {
       return saved;
     }
+    // Fallback to cached defaultLanguage
+    const localSettings = localStorage.getItem("signova_frontend_settings");
+    if (localSettings) {
+      const parsed = JSON.parse(localSettings);
+      if (parsed.languages && parsed.languages.defaultLanguage) {
+        const defaultLang = parsed.languages.defaultLanguage as LanguageKey;
+        if (["en", "hi", "te", "gu", "mr", "ta", "kn"].includes(defaultLang)) {
+          return defaultLang;
+        }
+      }
+    }
   } catch {}
   return "en";
 }
 
+function getInitialEnabledLanguages(): LanguageKey[] {
+  if (typeof window === "undefined") return ["en", "hi", "te", "gu", "mr", "ta", "kn"];
+  try {
+    const localSettings = localStorage.getItem("signova_frontend_settings");
+    if (localSettings) {
+      const parsed = JSON.parse(localSettings);
+      if (parsed.languages && Array.isArray(parsed.languages.enabledLanguages)) {
+        return parsed.languages.enabledLanguages as LanguageKey[];
+      }
+    }
+  } catch {}
+  return ["en", "hi", "te", "gu", "mr", "ta", "kn"];
+}
+
+function getInitialShowSelector(): boolean {
+  if (typeof window === "undefined") return true;
+  try {
+    const localSettings = localStorage.getItem("signova_frontend_settings");
+    if (localSettings) {
+      const parsed = JSON.parse(localSettings);
+      if (parsed.languages && typeof parsed.languages.showLanguageSelector === "boolean") {
+        return parsed.languages.showLanguageSelector;
+      }
+    }
+  } catch {}
+  return true;
+}
+
 export function LanguageProvider({ children }: { children: ReactNode }) {
   const [language, setLanguageState] = useState<LanguageKey>(getInitialLanguage);
+  const [enabledLanguages, setEnabledLanguages] = useState<LanguageKey[]>(getInitialEnabledLanguages);
+  const [showLanguageSelector, setShowLanguageSelector] = useState<boolean>(getInitialShowSelector);
 
   useEffect(() => {
     try {
       localStorage.setItem("signova_chat_lang", language);
       document.documentElement.setAttribute("lang", language);
     } catch {}
+  }, [language]);
+
+  // Fetch languages settings from database
+  useEffect(() => {
+    async function fetchLanguagesConfig() {
+      try {
+        const { data, error } = await supabase
+          .from("frontend_settings")
+          .select("*")
+          .eq("key", "languages")
+          .single();
+
+        if (!error && data && data.value) {
+          const config = data.value;
+          if (config.enabledLanguages) {
+            setEnabledLanguages(config.enabledLanguages);
+          }
+          if (typeof config.showLanguageSelector === "boolean") {
+            setShowLanguageSelector(config.showLanguageSelector);
+          }
+          // If the current language is not in the list of enabled languages, switch to default
+          if (config.enabledLanguages && !config.enabledLanguages.includes(language)) {
+            const defaultLang = config.defaultLanguage || "en";
+            setLanguageState(defaultLang);
+          } else if (!localStorage.getItem("signova_chat_lang") && config.defaultLanguage) {
+            setLanguageState(config.defaultLanguage);
+          }
+
+          // Sync to cache
+          const localSettingsRaw = localStorage.getItem("signova_frontend_settings") || "{}";
+          try {
+            const currentCache = JSON.parse(localSettingsRaw);
+            currentCache.languages = config;
+            localStorage.setItem("signova_frontend_settings", JSON.stringify(currentCache));
+          } catch {
+            localStorage.setItem("signova_frontend_settings", JSON.stringify({ languages: config }));
+          }
+        }
+      } catch (err) {
+        console.warn("Failed to fetch languages settings from Supabase", err);
+      }
+    }
+    fetchLanguagesConfig();
   }, [language]);
 
   // Handle local storage change in another tab / window or from chatbot
@@ -70,14 +157,10 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
 
   const t = (key: string, fallback?: string): string => {
     try {
-      // 1. Split path like 'home.hero.title'
       const parts = key.split(".");
-      
-      // 2. Fetch value from current language translations dictionary
       const langDict = translations[language] || translations.en;
       let val = parts.reduce((acc, part) => acc && acc[part], langDict as any);
       
-      // 3. Fallback to English master dictionary if not found in current language
       if (val === undefined || val === null) {
         const engDict = translations.en;
         val = parts.reduce((acc, part) => acc && acc[part], engDict as any);
@@ -94,7 +177,7 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <LanguageContext.Provider value={{ language, setLanguage, t }}>
+    <LanguageContext.Provider value={{ language, setLanguage, t, enabledLanguages, showLanguageSelector }}>
       {children}
     </LanguageContext.Provider>
   );

@@ -44,7 +44,10 @@ export function Navbar() {
   const path = useRouterState({ select: (s) => s.location.pathname });
   const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const { language, setLanguage, t } = useLanguage();
+  const { language, setLanguage, t, enabledLanguages, showLanguageSelector } = useLanguage();
+  const activeLanguages = LANGUAGES.filter((l) =>
+    enabledLanguages ? enabledLanguages.includes(l.code) : true
+  );
   const [langOpen, setLangOpen] = useState(false);
   const langTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -235,52 +238,54 @@ export function Navbar() {
 
           <div className="hidden lg:flex items-center gap-2">
             {/* Desktop Globe Language Dropdown Selector */}
-            <div
-              ref={langSelectorRef}
-              className="relative"
-              onMouseEnter={handleLangEnter}
-              onMouseLeave={handleLangLeave}
-            >
-              <button
-                onClick={() => setLangOpen(!langOpen)}
-                className="inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl text-sm font-semibold text-foreground/80 hover:text-primary-text hover:bg-secondary/60 transition-all duration-300 border border-border/30 hover:border-primary-text/20 shadow-sm cursor-pointer glass"
-                aria-label="Select Language"
+            {showLanguageSelector !== false && (
+              <div
+                ref={langSelectorRef}
+                className="relative"
+                onMouseEnter={handleLangEnter}
+                onMouseLeave={handleLangLeave}
               >
-                <Globe className="size-4 text-primary-text animate-pulse" />
-                <span className="text-xs font-semibold leading-none flex items-center">{LANGUAGES.find(l => l.code === language)?.nativeName || "English"}</span>
-                <ChevronDown className={`size-3 text-foreground/50 transition-transform duration-300 ${langOpen ? "rotate-180 text-primary-text" : ""}`} />
-              </button>
+                <button
+                  onClick={() => setLangOpen(!langOpen)}
+                  className="inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl text-sm font-semibold text-foreground/80 hover:text-primary-text hover:bg-secondary/60 transition-all duration-300 border border-border/30 hover:border-primary-text/20 shadow-sm cursor-pointer glass"
+                  aria-label="Select Language"
+                >
+                  <Globe className="size-4 text-primary-text animate-pulse" />
+                  <span className="text-xs font-semibold leading-none flex items-center">{LANGUAGES.find(l => l.code === language)?.nativeName || "English"}</span>
+                  <ChevronDown className={`size-3 text-foreground/50 transition-transform duration-300 ${langOpen ? "rotate-180 text-primary-text" : ""}`} />
+                </button>
 
-              {langOpen && (
-                <div className="absolute right-0 top-full pt-3 w-52 z-50">
-                  <div className="bg-popover/90 text-popover-foreground shadow-glow rounded-2xl p-2 border border-primary/10 glass animate-fade-in flex flex-col gap-1">
-                    <div className="px-3 py-1.5 text-[10px] uppercase tracking-wider font-bold text-muted-foreground border-b border-border/20 mb-1">
-                      Choose Language / भाषा चुनें
+                {langOpen && (
+                  <div className="absolute right-0 top-full pt-3 w-52 z-50">
+                    <div className="bg-popover/90 text-popover-foreground shadow-glow rounded-2xl p-2 border border-primary/10 glass animate-fade-in flex flex-col gap-1">
+                      <div className="px-3 py-1.5 text-[10px] uppercase tracking-wider font-bold text-muted-foreground border-b border-border/20 mb-1">
+                        Choose Language / भाषा चुनें
+                      </div>
+                      {activeLanguages.map((lang) => {
+                        const active = language === lang.code;
+                        return (
+                          <button
+                            key={lang.code}
+                            onClick={() => {
+                              setLanguage(lang.code);
+                              setLangOpen(false);
+                            }}
+                            className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold transition-all duration-200 cursor-pointer ${
+                              active
+                                ? "bg-primary text-primary-foreground shadow-sm bg-gradient-to-r from-primary to-leaf"
+                                : "hover:bg-secondary/70 text-foreground hover:translate-x-1"
+                            }`}
+                          >
+                            <span>{lang.nativeName}</span>
+                            {active && <span className="size-1.5 rounded-full bg-accent-foreground" />}
+                          </button>
+                        );
+                      })}
                     </div>
-                    {LANGUAGES.map((lang) => {
-                      const active = language === lang.code;
-                      return (
-                        <button
-                          key={lang.code}
-                          onClick={() => {
-                            setLanguage(lang.code);
-                            setLangOpen(false);
-                          }}
-                          className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold transition-all duration-200 cursor-pointer ${
-                            active
-                              ? "bg-primary text-primary-foreground shadow-sm bg-gradient-to-r from-primary to-leaf"
-                              : "hover:bg-secondary/70 text-foreground hover:translate-x-1"
-                          }`}
-                        >
-                          <span>{lang.nativeName}</span>
-                          {active && <span className="size-1.5 rounded-full bg-accent-foreground" />}
-                        </button>
-                      );
-                    })}
                   </div>
-                </div>
-              )}
-            </div>
+                )}
+              </div>
+            )}
 
             <ThemeToggle />
             <Link
@@ -293,50 +298,52 @@ export function Navbar() {
 
           <div className="lg:hidden flex items-center gap-1">
             {/* Mobile Top Bar Language Selector Dropdown */}
-            <div ref={mobileLangSelectorRef} className="relative">
-              <button
-                onClick={() => {
-                  setLangOpen(!langOpen);
-                  setOpen(false); // Close navigation menu when language panel opens
-                }}
-                className="inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold text-foreground/80 hover:bg-secondary/60 border border-border/20 shadow-sm cursor-pointer glass"
-                aria-label="Select Language"
-              >
-                <Globe className="size-4 text-primary-text animate-pulse" />
-                <span className="text-xs font-bold leading-none flex items-center uppercase">{language}</span>
-                <ChevronDown className={`size-3.5 text-foreground/50 transition-transform duration-300 ${langOpen ? "rotate-180 text-primary-text" : ""}`} />
-              </button>
+            {showLanguageSelector !== false && (
+              <div ref={mobileLangSelectorRef} className="relative">
+                <button
+                  onClick={() => {
+                    setLangOpen(!langOpen);
+                    setOpen(false); // Close navigation menu when language panel opens
+                  }}
+                  className="inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold text-foreground/80 hover:bg-secondary/60 border border-border/20 shadow-sm cursor-pointer glass"
+                  aria-label="Select Language"
+                >
+                  <Globe className="size-4 text-primary-text animate-pulse" />
+                  <span className="text-xs font-bold leading-none flex items-center uppercase">{language}</span>
+                  <ChevronDown className={`size-3.5 text-foreground/50 transition-transform duration-300 ${langOpen ? "rotate-180 text-primary-text" : ""}`} />
+                </button>
 
-              {langOpen && (
-                <div className="absolute right-0 top-full mt-2 w-56 z-50">
-                  <div className="bg-popover/95 text-popover-foreground shadow-glow rounded-2xl p-2 border border-primary/10 glass animate-fade-in flex flex-col gap-1">
-                    <div className="px-3.5 py-2 text-[10px] uppercase tracking-wider font-bold text-muted-foreground border-b border-border/20 mb-1">
-                      Choose Language / भाषा चुनें
+                {langOpen && (
+                  <div className="absolute right-0 top-full mt-2 w-56 z-50">
+                    <div className="bg-popover/95 text-popover-foreground shadow-glow rounded-2xl p-2 border border-primary/10 glass animate-fade-in flex flex-col gap-1">
+                      <div className="px-3.5 py-2 text-[10px] uppercase tracking-wider font-bold text-muted-foreground border-b border-border/20 mb-1">
+                        Choose Language / भाषा चुनें
+                      </div>
+                      {activeLanguages.map((lang) => {
+                        const active = language === lang.code;
+                        return (
+                          <button
+                            key={lang.code}
+                            onClick={() => {
+                              setLanguage(lang.code);
+                              setLangOpen(false);
+                            }}
+                            className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200 cursor-pointer ${
+                              active
+                                ? "bg-primary text-primary-foreground shadow-sm bg-gradient-to-r from-primary to-leaf"
+                                : "hover:bg-secondary/70 text-foreground hover:translate-x-1"
+                            }`}
+                          >
+                            <span>{lang.nativeName}</span>
+                            {active && <span className="size-1.5 rounded-full bg-accent-foreground" />}
+                          </button>
+                        );
+                      })}
                     </div>
-                    {LANGUAGES.map((lang) => {
-                      const active = language === lang.code;
-                      return (
-                        <button
-                          key={lang.code}
-                          onClick={() => {
-                            setLanguage(lang.code);
-                            setLangOpen(false);
-                          }}
-                          className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200 cursor-pointer ${
-                            active
-                              ? "bg-primary text-primary-foreground shadow-sm bg-gradient-to-r from-primary to-leaf"
-                              : "hover:bg-secondary/70 text-foreground hover:translate-x-1"
-                          }`}
-                        >
-                          <span>{lang.nativeName}</span>
-                          {active && <span className="size-1.5 rounded-full bg-accent-foreground" />}
-                        </button>
-                      );
-                    })}
                   </div>
-                </div>
-              )}
-            </div>
+                )}
+              </div>
+            )}
 
             <ThemeToggle />
             <button
