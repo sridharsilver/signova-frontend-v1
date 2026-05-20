@@ -54,10 +54,39 @@ export function AiChatFab() {
     };
   }, []);
 
+  const [isMobile, setIsMobile] = useState(false);
+  const [dragConstraints, setDragConstraints] = useState({ left: 0, right: 0, top: 0, bottom: 0 });
+
+  useEffect(() => {
+    const checkConstraints = () => {
+      const mobile = window.innerWidth < 640;
+      setIsMobile(mobile);
+      if (mobile) {
+        setDragConstraints({
+          left: -window.innerWidth + 80,
+          right: 10,
+          top: -window.innerHeight + 80,
+          bottom: 10
+        });
+      } else {
+        setDragConstraints({ left: 0, right: 0, top: 0, bottom: 0 });
+      }
+    };
+    checkConstraints();
+    window.addEventListener("resize", checkConstraints);
+    return () => window.removeEventListener("resize", checkConstraints);
+  }, []);
+
   if (!isVisible) return null;
 
   return (
-    <div className="fixed bottom-6 right-6 z-40 flex items-center gap-3">
+    <motion.div
+      drag={isMobile}
+      dragConstraints={dragConstraints}
+      dragElastic={0.15}
+      dragMomentum={false}
+      className="fixed bottom-6 right-6 z-40 flex items-center gap-3 touch-none select-none"
+    >
       {/* Dynamic Hint Tooltip */}
       <div 
         className={`bg-charcoal text-white text-xs font-semibold py-2 px-3.5 rounded-2xl glass-dark border border-white/10 shadow-lg pointer-events-none transition-all duration-500 whitespace-nowrap ${
@@ -121,6 +150,6 @@ export function AiChatFab() {
           </AnimatePresence>
         </motion.button>
       </div>
-    </div>
+    </motion.div>
   );
 }
