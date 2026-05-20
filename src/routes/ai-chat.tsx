@@ -1092,7 +1092,7 @@ export function AiChat({ isModal = false, onClose }: { isModal?: boolean; onClos
           animate={{ opacity: 1, y: 0, scale: 1, filter: "blur(0px)" }}
           exit={{ opacity: 0, y: 40, scale: 0.95, filter: "blur(10px)" }}
           transition={{ duration: 0.3, ease: "easeOut" }}
-          className="fixed inset-x-0 bottom-0 sm:inset-x-auto sm:bottom-24 sm:right-6 z-50 w-full sm:w-[400px] max-w-[calc(100vw-32px)] h-[90dvh] sm:h-[600px] sm:max-h-[calc(100vh-120px)] flex flex-col rounded-t-3xl sm:rounded-3xl shadow-[0_32px_64px_-16px_rgba(0,0,0,0.2)] overflow-hidden glass-panel select-none pointer-events-auto"
+          className="fixed left-1/2 -translate-x-1/2 bottom-6 sm:left-auto sm:translate-x-0 sm:right-6 sm:bottom-24 z-50 w-[calc(100vw-32px)] sm:w-[400px] max-w-[420px] sm:max-w-none h-[78dvh] sm:h-[600px] sm:max-h-[calc(100vh-120px)] flex flex-col rounded-3xl shadow-[0_32px_64px_-16px_rgba(0,0,0,0.2)] overflow-hidden glass-panel select-none pointer-events-auto"
           style={isDesktop ? { width: `${modalSize.width}px`, height: `${modalSize.height}px` } : undefined}
         >
           {/* Resize Handles (Desktop Only) */}
