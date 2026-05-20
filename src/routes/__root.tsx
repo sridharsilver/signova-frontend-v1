@@ -6,6 +6,7 @@ import { AiChatFab } from "@/components/layout/AiChatFab";
 import { ThemeProvider } from "@/hooks/use-theme";
 import { useChatModal } from "@/lib/chat-modal";
 import { AiChat } from "./ai-chat";
+import { AnimatePresence } from "framer-motion";
 
 import { LanguageProvider } from "@/hooks/use-language";
 
@@ -51,9 +52,11 @@ function RootComponent() {
           {!isChatPage && <AiChatFab />}
 
           {/* Global Floating AI Crop Advisor Dialog Overlay */}
-          {isOpen && !isChatPage && (
-            <AiChat isModal={true} onClose={() => setIsOpen(false)} />
-          )}
+          <AnimatePresence>
+            {isOpen && !isChatPage && (
+              <AiChat isModal={true} onClose={() => setIsOpen(false)} />
+            )}
+          </AnimatePresence>
         </div>
       </ThemeProvider>
     </LanguageProvider>

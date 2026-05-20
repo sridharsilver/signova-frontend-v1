@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { 
   Send, Globe, Settings, Bot, User, Sparkles, Trash2, 
   HelpCircle, Phone, ArrowLeft, Key, Info, ArrowUpRight, Sprout, X,
-  ChevronLeft, ChevronRight
+  ChevronLeft, ChevronRight, Volume2, VolumeX, Mic, MicOff, Loader2
 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -256,15 +256,275 @@ export function AiChat({ isModal = false, onClose }: { isModal?: boolean; onClos
   const [lang, setLang] = useState<LanguageKey>("en");
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
-  const [apiKey, setApiKey] = useState("");
-  const [useGemini, setUseGemini] = useState(false);
+  const [apiKey, setApiKey] = useState("AIzaSyAwHAhjR_Et0XhbBQ3yxJh2MtWvlxqmE5o");
+  const [useGemini, setUseGemini] = useState(true);
   const [isTyping, setIsTyping] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
   
+  // Voice & Interaction states
+  const [isMuted, setIsMuted] = useState(() => {
+    return localStorage.getItem("signova_chat_muted") === "true";
+  });
+  const [isListening, setIsListening] = useState(false);
+  const [isSpeaking, setIsSpeaking] = useState(false);
+
+  // Modal Resizing States & Handlers
+  const [modalSize, setModalSize] = useState(() => {
+    try {
+      const saved = localStorage.getItem("signova_chat_modal_size");
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        return {
+          width: Math.max(320, Math.min(800, parsed.width)),
+          height: Math.max(400, Math.min(1000, parsed.height))
+        };
+      }
+    } catch (e) {}
+    // Default to 40% of viewport width and 60% of viewport height on desktop
+    const defaultWidth = typeof window !== "undefined" ? Math.max(350, Math.round(window.innerWidth * 0.40)) : 400;
+    const defaultHeight = typeof window !== "undefined" ? Math.max(450, Math.round(window.innerHeight * 0.60)) : 600;
+    return { width: defaultWidth, height: defaultHeight };
+  });
+  const [isDesktop, setIsDesktop] = useState(false);
+
+  useEffect(() => {
+    const checkDesktop = () => setIsDesktop(window.innerWidth >= 640);
+    checkDesktop();
+    window.addEventListener("resize", checkDesktop);
+    return () => window.removeEventListener("resize", checkDesktop);
+  }, []);
+
+  const startResize = (e: React.MouseEvent, direction: "w" | "n" | "nw") => {
+    e.preventDefault();
+    const startX = e.clientX;
+    const startY = e.clientY;
+    const startWidth = modalSize.width;
+    const startHeight = modalSize.height;
+
+    const doResize = (moveEvent: MouseEvent) => {
+      let newWidth = startWidth;
+      let newHeight = startHeight;
+
+      if (direction === "w" || direction === "nw") {
+        // Left drag changes width (since the right side is fixed)
+        const deltaX = startX - moveEvent.clientX;
+        newWidth = Math.max(320, Math.min(window.innerWidth - 48, startWidth + deltaX));
+      }
+
+      if (direction === "n" || direction === "nw") {
+        // Top drag changes height (since the bottom side is fixed)
+        const deltaY = startY - moveEvent.clientY;
+        newHeight = Math.max(400, Math.min(window.innerHeight - 120, startHeight + deltaY));
+      }
+
+      setModalSize({ width: newWidth, height: newHeight });
+    };
+
+    const stopResize = () => {
+      document.removeEventListener("mousemove", doResize);
+      document.removeEventListener("mouseup", stopResize);
+      setModalSize(prev => {
+        localStorage.setItem("signova_chat_modal_size", JSON.stringify(prev));
+        return prev;
+      });
+    };
+
+    document.addEventListener("mousemove", doResize);
+    document.addEventListener("mouseup", stopResize);
+  };
+
   const chatContainerRef = useRef<HTMLDivElement>(null);
   const langBarRef = useRef<HTMLDivElement>(null);
+  const presetsBarRef = useRef<HTMLDivElement>(null);
   const isFirstRender = useRef(true);
   const t = LOCALIZATION[lang];
+
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const recognitionRef = useRef<any>(null);
+  const utteranceRef = useRef<any>(null);
+
+  // Initialize entry sound effect
+  useEffect(() => {
+    audioRef.current = new Audio("https://assets.mixkit.co/active_storage/sfx/2354/2354-preview.mp3");
+    audioRef.current.load();
+    return () => {
+      if (window.speechSynthesis) {
+        window.speechSynthesis.cancel();
+      }
+    };
+  }, []);
+
+  // Initialize Speech Recognition when language changes
+  useEffect(() => {
+    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (SpeechRecognition) {
+      const rec = new SpeechRecognition();
+      rec.continuous = false;
+      rec.interimResults = false;
+      
+      const langLocaleMap: Record<LanguageKey, string> = {
+        en: "en-US",
+        hi: "hi-IN",
+        te: "te-IN",
+        gu: "gu-IN",
+        mr: "mr-IN",
+        ta: "ta-IN",
+        kn: "kn-IN"
+      };
+      rec.lang = langLocaleMap[lang] || "en-US";
+
+      rec.onresult = (event: any) => {
+        const transcript = event.results[0][0].transcript;
+        if (transcript.trim()) {
+          setInput(transcript);
+          handleSend(transcript);
+        }
+        setIsListening(false);
+      };
+
+      rec.onerror = () => setIsListening(false);
+      rec.onend = () => setIsListening(false);
+      
+      recognitionRef.current = rec;
+    }
+  }, [lang]);
+
+  // Text-To-Speech function
+  const speakText = (text: string, voiceLang: string) => {
+    if (isMuted || !("speechSynthesis" in window)) return;
+    
+    window.speechSynthesis.cancel();
+
+    // Clean up HTML tags and markdown symbols
+    const cleanText = text
+      .replace(/<[^>]*>/g, "")
+      .replace(/!\[.*?\]\(.*?\)/g, "")
+      .replace(/\[(.*?)\]\(.*?\)/g, "$1")
+      .replace(/[*_#`~>]/g, "")
+      .replace(/\s+/g, " ")
+      .trim();
+
+    const utterance = new SpeechSynthesisUtterance(cleanText);
+    utterance.lang = voiceLang || "en-US";
+
+    const getOptimalVoice = () => {
+      const voices = window.speechSynthesis.getVoices();
+      if (voices.length === 0) return null;
+      
+      const langPrefix = utterance.lang.split("-")[0];
+      const matchVoices = voices.filter(v => v.lang.startsWith(langPrefix));
+      
+      if (matchVoices.length > 0) {
+        return matchVoices.sort((a, b) => {
+          const score = (voice: typeof a) => {
+            let pts = 0;
+            const name = voice.name.toLowerCase();
+            if (name.includes("google") || name.includes("premium") || name.includes("natural")) pts += 10;
+            if (name.includes("female") || name.includes("vani") || name.includes("heera")) pts += 5;
+            return pts;
+          };
+          return score(b) - score(a);
+        })[0];
+      }
+      return voices.find(v => v.name.toLowerCase().includes("google") || v.name.toLowerCase().includes("female")) || voices[0];
+    };
+
+    const runSpeak = () => {
+      const voice = getOptimalVoice();
+      if (voice) utterance.voice = voice;
+      
+      utterance.onstart = () => setIsSpeaking(true);
+      utterance.onend = () => setIsSpeaking(false);
+      utterance.onerror = () => setIsSpeaking(false);
+      
+      utteranceRef.current = utterance;
+      window.speechSynthesis.speak(utterance);
+    };
+
+    if (window.speechSynthesis.getVoices().length === 0) {
+      window.speechSynthesis.onvoiceschanged = () => {
+        runSpeak();
+        window.speechSynthesis.onvoiceschanged = null;
+      };
+    } else {
+      runSpeak();
+    }
+  };
+
+  const toggleListening = () => {
+    if (!recognitionRef.current) {
+      toast.error("Speech recognition is not supported in this browser.");
+      return;
+    }
+    
+    if (isListening) {
+      recognitionRef.current.stop();
+      setIsListening(false);
+    } else {
+      window.speechSynthesis.cancel();
+      setIsSpeaking(false);
+      
+      recognitionRef.current.start();
+      setIsListening(true);
+      toast.info("Listening... Speak now");
+    }
+  };
+
+  const toggleMuted = () => {
+    const nextMuted = !isMuted;
+    setIsMuted(nextMuted);
+    localStorage.setItem("signova_chat_muted", String(nextMuted));
+    if (nextMuted) {
+      window.speechSynthesis.cancel();
+      setIsSpeaking(false);
+    } else {
+      toast.info("Voice replies enabled");
+    }
+  };
+
+  const [canScrollLeft, setCanScrollLeft] = useState(false);
+  const [canScrollRight, setCanScrollRight] = useState(false);
+  
+  const [canScrollPresetsLeft, setCanScrollPresetsLeft] = useState(false);
+  const [canScrollPresetsRight, setCanScrollPresetsRight] = useState(false);
+
+  const checkScrollState = () => {
+    const el = langBarRef.current;
+    if (el) {
+      const canScrollL = el.scrollLeft > 1;
+      const canScrollR = el.scrollWidth - el.clientWidth - el.scrollLeft > 1;
+      setCanScrollLeft(canScrollL);
+      setCanScrollRight(canScrollR);
+    }
+  };
+
+  const checkPresetsScrollState = () => {
+    const el = presetsBarRef.current;
+    if (el) {
+      const canScrollL = el.scrollLeft > 1;
+      const canScrollR = el.scrollWidth - el.clientWidth - el.scrollLeft > 1;
+      setCanScrollPresetsLeft(canScrollL);
+      setCanScrollPresetsRight(canScrollR);
+    }
+  };
+
+  useEffect(() => {
+    const timer = setTimeout(checkScrollState, 150);
+    window.addEventListener("resize", checkScrollState);
+    return () => {
+      clearTimeout(timer);
+      window.removeEventListener("resize", checkScrollState);
+    };
+  }, [lang, modalSize]);
+
+  useEffect(() => {
+    const timer = setTimeout(checkPresetsScrollState, 150);
+    window.addEventListener("resize", checkPresetsScrollState);
+    return () => {
+      clearTimeout(timer);
+      window.removeEventListener("resize", checkPresetsScrollState);
+    };
+  }, [messages, lang, modalSize]);
 
   const scrollLangBar = (direction: "left" | "right") => {
     if (langBarRef.current) {
@@ -273,6 +533,18 @@ export function AiChat({ isModal = false, onClose }: { isModal?: boolean; onClos
         left: direction === "left" ? -scrollAmount : scrollAmount,
         behavior: "smooth"
       });
+      setTimeout(checkScrollState, 350);
+    }
+  };
+
+  const scrollPresetsBar = (direction: "left" | "right") => {
+    if (presetsBarRef.current) {
+      const scrollAmount = 160;
+      presetsBarRef.current.scrollBy({
+        left: direction === "left" ? -scrollAmount : scrollAmount,
+        behavior: "smooth"
+      });
+      setTimeout(checkPresetsScrollState, 350);
     }
   };
 
@@ -283,8 +555,16 @@ export function AiChat({ isModal = false, onClose }: { isModal?: boolean; onClos
     }
     
     const savedKey = localStorage.getItem("signova_gemini_api_key");
-    if (savedKey) {
-      setApiKey(savedKey);
+    if (savedKey !== null) {
+      if (savedKey) {
+        setApiKey(savedKey);
+        setUseGemini(true);
+      } else {
+        setApiKey("");
+        setUseGemini(false);
+      }
+    } else {
+      setApiKey("AIzaSyAwHAhjR_Et0XhbBQ3yxJh2MtWvlxqmE5o");
       setUseGemini(true);
     }
 
@@ -380,6 +660,10 @@ export function AiChat({ isModal = false, onClose }: { isModal?: boolean; onClos
       setInput("");
     }
 
+    // Cancel speech synthesis when user interacts/sends a new prompt
+    window.speechSynthesis.cancel();
+    setIsSpeaking(false);
+
     const time = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
     const userMsg: Message = { sender: "user", text: prompt, timestamp: time };
     
@@ -390,20 +674,43 @@ export function AiChat({ isModal = false, onClose }: { isModal?: boolean; onClos
     setTimeout(async () => {
       try {
         let replyText = "";
+        let isRich = false;
         
         if (useGemini && apiKey) {
-          replyText = await fetchGeminiResponse(prompt, lang, apiKey);
+          const rawReply = await fetchGeminiResponse(prompt, lang, apiKey);
+          replyText = formatMarkdownToHtml(rawReply);
+          isRich = true;
         } else {
           replyText = getLocalAgroResponse(prompt, lang);
+          isRich = true;
         }
 
         const botMsg: Message = {
           sender: "bot",
           text: replyText,
           timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-          isRichHtml: !useGemini
+          isRichHtml: isRich
         };
         setMessages((prev) => [...prev, botMsg]);
+
+        // Play entry sound effect if not muted
+        if (!isMuted && audioRef.current) {
+          audioRef.current.currentTime = 0;
+          audioRef.current.play().catch(err => console.warn("Audio play failed:", err));
+        }
+
+        // Speak the reply
+        const localeMap: Record<LanguageKey, string> = {
+          en: "en-US",
+          hi: "hi-IN",
+          te: "te-IN",
+          gu: "gu-IN",
+          mr: "mr-IN",
+          ta: "ta-IN",
+          kn: "kn-IN"
+        };
+        speakText(replyText, localeMap[lang] || "en-US");
+
       } catch (err) {
         toast.error("Failed to generate AI response. Using local fallback.");
         const fallbackText = getLocalAgroResponse(prompt, lang);
@@ -414,6 +721,21 @@ export function AiChat({ isModal = false, onClose }: { isModal?: boolean; onClos
           isRichHtml: true
         };
         setMessages((prev) => [...prev, botMsg]);
+
+        if (!isMuted && audioRef.current) {
+          audioRef.current.currentTime = 0;
+          audioRef.current.play().catch(err => console.warn("Audio play failed:", err));
+        }
+        const localeMap: Record<LanguageKey, string> = {
+          en: "en-US",
+          hi: "hi-IN",
+          te: "te-IN",
+          gu: "gu-IN",
+          mr: "mr-IN",
+          ta: "ta-IN",
+          kn: "kn-IN"
+        };
+        speakText(fallbackText, localeMap[lang] || "en-US");
       } finally {
         setIsTyping(false);
       }
@@ -422,88 +744,66 @@ export function AiChat({ isModal = false, onClose }: { isModal?: boolean; onClos
 
   const renderChatCard = () => {
     return (
-      <Card className={isModal ? "border-0 bg-transparent rounded-none flex-1 flex flex-col overflow-hidden h-full min-h-0" : "glass shadow-card border-border/60 rounded-3xl flex-1 flex flex-col overflow-hidden h-full min-h-0"}>
+      <Card className={isModal ? "border-0 bg-transparent rounded-none flex-1 flex flex-col overflow-hidden h-full min-h-0" : "glass-panel shadow-card border-none rounded-3xl flex-1 flex flex-col overflow-hidden h-full min-h-0"}>
         
         {/* Chat Card Header */}
-        <div className="p-4 sm:p-5 border-b border-border/60 bg-gradient-to-br from-primary/5 via-transparent to-transparent flex items-center justify-between gap-3 shrink-0">
+        <div className="p-4 sm:p-5 border-b border-border/40 bg-gradient-to-br from-primary/10 via-transparent to-transparent flex items-center justify-between gap-3 shrink-0">
           <div className="flex items-center gap-3">
-            <div className="size-10 rounded-xl bg-lime-gradient p-1.5 shrink-0 shadow-sm flex items-center justify-center">
-              <img src="/favicon.ico" alt="Signova Logo" className="size-full object-contain animate-pulse" />
+            {/* Glowing Avatar */}
+            <div className="relative shrink-0 select-none">
+              {/* Outer rotating gradient ring */}
+              <div className="absolute -inset-0.5 rounded-xl bg-gradient-to-tr from-primary via-primary dark:via-lime to-emerald-500 opacity-80 blur-[2px] animate-spin-slow" />
+              {/* Inner container */}
+              <div className="relative size-10 rounded-xl bg-charcoal p-1.5 flex items-center justify-center border border-white/10 z-10">
+                <img src="/favicon.ico" alt="Signova Logo" className="size-full object-contain" />
+              </div>
+              {/* Multi-layered status ping */}
+              <span className="absolute -bottom-1 -right-1 z-20 flex size-3">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-30 scale-150 [animation-delay:0.2s]" />
+                <span className="relative inline-flex rounded-full size-3 bg-emerald-500 border border-background shadow-xs" />
+              </span>
             </div>
+            
             <div>
-              <h2 className="text-sm sm:text-base font-bold text-foreground flex items-center gap-1.5">
-                {t.headerTitle}
-                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-emerald-500/10 border border-emerald-500/25 text-emerald-500">
-                  <span className="size-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                  {t.onlineText}
+              <h2 className="text-sm sm:text-base font-bold text-foreground tracking-tight">
+                <span className="bg-gradient-to-r from-foreground to-foreground/80 bg-clip-text text-transparent">
+                  {t.headerTitle}
                 </span>
               </h2>
-              <p className="text-[10px] sm:text-xs text-muted-foreground">{t.headerSub}</p>
+              <p className="text-[10px] sm:text-xs text-muted-foreground mt-0.5">
+                {t.headerSub}
+              </p>
             </div>
           </div>
           
-          <div className="flex items-center gap-2">
-            <span className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-secondary/80 border border-border/80 text-foreground/80">
-              <span className="size-2 rounded-full bg-emerald-500 animate-pulse" />
-              {useGemini ? t.geminiModeLabel : t.localModeLabel}
-            </span>
-
-            {/* Config button */}
-            <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-              <DialogTrigger asChild>
-                <Button size="icon" variant="outline" className="h-8 w-8 rounded-lg shadow-sm border-border/80 text-foreground/80 hover:bg-secondary/40">
-                  <Settings className="size-4" />
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="glass-dark border border-white/10 text-white max-w-md rounded-2xl">
-                <DialogHeader>
-                  <DialogTitle className="text-lime flex items-center gap-2 font-bold text-base">
-                    <Key className="size-5" /> Gemini AI Engine Settings
-                  </DialogTitle>
-                  <DialogDescription className="text-zinc-300 text-xs mt-1">
-                    Connect Google Gemini 1.5 Flash to activate advanced, real-time agricultural reasoning and dynamic crop prescriptions.
-                  </DialogDescription>
-                </DialogHeader>
-                <div className="py-4 space-y-4">
-                  <div className="space-y-2">
-                    <label className="text-xs font-semibold text-zinc-300">Google Gemini API Key</label>
-                    <Input
-                      type="password"
-                      placeholder="AIzaSy..."
-                      value={apiKey}
-                      onChange={(e) => setApiKey(e.target.value)}
-                      className="bg-black/40 border-white/10 focus:border-lime rounded-xl text-white font-mono placeholder:text-zinc-600"
-                    />
-                    <div className="flex items-center gap-1.5 text-[10px] text-zinc-400 bg-white/5 p-2.5 rounded-xl border border-white/5 mt-2">
-                      <Info className="size-3.5 text-lime shrink-0" />
-                      <span>We do not store your key on any server. It resides completely in your own local browser storage.</span>
-                    </div>
-                  </div>
-                </div>
-                <DialogFooter className="gap-2 sm:gap-0">
-                  <Button 
-                    variant="ghost" 
-                    onClick={() => {
-                      setApiKey("");
-                      handleSaveApiKey("");
-                    }} 
-                    className="text-zinc-400 hover:text-white hover:bg-white/10 rounded-xl text-xs"
-                  >
-                    Disconnect Key (Local Mode)
-                  </Button>
-                  <Button 
-                    onClick={() => handleSaveApiKey(apiKey)} 
-                    className="bg-lime-gradient text-charcoal font-semibold rounded-xl text-xs shadow-glow"
-                  >
-                    {t.settingSave}
-                  </Button>
-                </DialogFooter>
-              </DialogContent>
-            </Dialog>
+          <div className="flex items-center gap-1.5">
+            {/* Voice Mute / Unmute Button */}
+            <Button
+              size="icon"
+              variant="outline"
+              onClick={toggleMuted}
+              className={`h-8.5 w-8.5 rounded-xl border border-border/80 text-muted-foreground hover:bg-secondary/40 transition-all cursor-pointer ${
+                !isMuted ? "text-primary dark:text-lime border-primary/30 dark:border-lime/30 bg-primary/5 dark:bg-lime/5" : ""
+              }`}
+              title={isMuted ? "Unmute Voice Responses" : "Mute Voice Responses"}
+            >
+              {isMuted ? (
+                <VolumeX className="size-4" />
+              ) : (
+                <Volume2 className={`size-4 ${isSpeaking ? "animate-bounce" : ""}`} />
+              )}
+            </Button>
 
             {/* Clear Chat Button */}
-            <Button size="icon" variant="outline" onClick={clearChat} className="h-8 w-8 rounded-lg border-border/80 text-muted-foreground hover:text-destructive hover:bg-destructive/10" title="Clear Chat History">
-              <Trash2 className="size-4" />
+            <Button 
+              size="icon" 
+              variant="outline" 
+              onClick={clearChat} 
+              className="h-8.5 w-8.5 rounded-xl border border-border/80 text-muted-foreground hover:text-destructive hover:bg-destructive/10 hover:border-destructive/30 transition-all cursor-pointer group" 
+              title="Clear Chat History"
+            >
+              <Trash2 className="size-4 group-hover:scale-110 transition-transform duration-200" />
             </Button>
 
             {/* Close Button */}
@@ -512,18 +812,18 @@ export function AiChat({ isModal = false, onClose }: { isModal?: boolean; onClos
                 size="icon" 
                 variant="outline" 
                 onClick={onClose} 
-                className="h-8 w-8 rounded-lg border border-border/80 text-foreground/80 hover:bg-secondary/40 hover:text-white"
+                className="h-8.5 w-8.5 rounded-xl border border-border/80 text-foreground/80 hover:bg-secondary/40 hover:text-white transition-all cursor-pointer group"
                 title="Close Chat"
               >
-                <X className="size-4" />
+                <X className="size-4 group-hover:scale-110 transition-transform" />
               </Button>
             ) : (
               <Link 
                 to="/" 
-                className="h-8 w-8 rounded-lg shadow-sm border border-border/80 text-foreground/80 hover:bg-secondary/40 grid place-items-center transition-colors hover:text-white"
+                className="h-8.5 w-8.5 rounded-xl shadow-xs border border-border/80 text-foreground/80 hover:bg-secondary/40 grid place-items-center transition-all hover:text-white cursor-pointer group"
                 title="Exit / Close"
               >
-                <X className="size-4" />
+                <X className="size-4 group-hover:scale-110 transition-transform" />
               </Link>
             )}
           </div>
@@ -531,20 +831,27 @@ export function AiChat({ isModal = false, onClose }: { isModal?: boolean; onClos
 
         {/* Scrollable Language Bar Container with Navigation Arrows */}
         <div className={`relative border-b border-border/40 bg-muted/20 flex items-center shrink-0 group ${isModal ? "" : "lg:hidden"}`}>
-          {/* Left Arrow */}
-          <button 
-            type="button"
-            onClick={() => scrollLangBar("left")}
-            className="absolute left-1 z-10 size-7 rounded-full bg-background/90 border border-border/80 shadow-xs flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-secondary/80 transition-all opacity-0 group-hover:opacity-100 focus:opacity-100 lg:opacity-100 cursor-pointer"
-            aria-label="Scroll Languages Left"
-          >
-            <ChevronLeft className="size-4" />
-          </button>
+          {/* Left Arrow with Fade Overlay */}
+          {canScrollLeft && (
+            <div className="absolute left-0 top-0 bottom-0 w-16 bg-gradient-to-r from-background dark:from-[#0a0a0a] via-background/85 dark:via-[#0a0a0a]/85 to-transparent z-10 flex items-center pl-2 pointer-events-none">
+              <button 
+                type="button"
+                onClick={() => scrollLangBar("left")}
+                className="size-8 rounded-full bg-background dark:bg-[#121212] border border-border hover:border-primary hover:text-primary shadow-md flex items-center justify-center text-foreground transition-all cursor-pointer pointer-events-auto active:scale-95"
+                aria-label="Scroll Languages Left"
+              >
+                <ChevronLeft className="size-5" />
+              </button>
+            </div>
+          )}
 
           {/* Scrollable Language Bar */}
           <div 
             ref={langBarRef}
-            className="flex overflow-x-auto gap-2 py-3 px-9 scrollbar-none shrink-0 w-full scroll-smooth"
+            onScroll={checkScrollState}
+            className={`flex overflow-x-auto gap-2 py-3 scrollbar-none shrink-0 w-full scroll-smooth transition-all ${
+              (canScrollLeft || canScrollRight) ? "px-9" : "px-4 justify-center"
+            }`}
           >
             {(Object.keys(LOCALIZATION) as LanguageKey[]).map((key) => {
               const active = lang === key;
@@ -553,45 +860,49 @@ export function AiChat({ isModal = false, onClose }: { isModal?: boolean; onClos
                 <button
                   key={key}
                   onClick={() => handleLangChange(key)}
-                  className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-semibold whitespace-nowrap transition-all border cursor-pointer ${
+                  className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-extrabold whitespace-nowrap transition-all border cursor-pointer select-none active:scale-95 shadow-xs ${
                     active 
-                      ? "bg-primary text-primary-foreground border-primary scale-[1.02] shadow-sm" 
-                      : "bg-background text-foreground/80 border-border/60 hover:bg-secondary/20"
+                      ? "bg-primary text-primary-foreground border-primary shadow-[0_0_12px_rgba(132,204,22,0.25)] scale-[1.02]" 
+                      : "bg-deep/10 dark:bg-black/50 text-deep dark:text-foreground border-deep/20 dark:border-border/80 hover:bg-deep/20 hover:border-primary hover:text-deep dark:hover:text-primary-foreground"
                   }`}
                 >
                   <span>{langConfig.nativeName}</span>
-                  <span className="text-[9px] opacity-75">({langConfig.name})</span>
                 </button>
               );
             })}
           </div>
 
-          {/* Right Arrow */}
-          <button 
-            type="button"
-            onClick={() => scrollLangBar("right")}
-            className="absolute right-1 z-10 size-7 rounded-full bg-background/90 border border-border/80 shadow-xs flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-secondary/80 transition-all opacity-0 group-hover:opacity-100 focus:opacity-100 lg:opacity-100 cursor-pointer"
-            aria-label="Scroll Languages Right"
-          >
-            <ChevronRight className="size-4" />
-          </button>
+          {/* Right Arrow with Fade Overlay */}
+          {canScrollRight && (
+            <div className="absolute right-0 top-0 bottom-0 w-16 bg-gradient-to-l from-background dark:from-[#0a0a0a] via-background/85 dark:via-[#0a0a0a]/85 to-transparent z-10 flex items-center justify-end pr-2 pointer-events-none">
+              <button 
+                type="button"
+                onClick={() => scrollLangBar("right")}
+                className="size-8 rounded-full bg-background dark:bg-[#121212] border border-border hover:border-primary hover:text-primary shadow-md flex items-center justify-center text-foreground transition-all cursor-pointer pointer-events-auto active:scale-95"
+                aria-label="Scroll Languages Right"
+              >
+                <ChevronRight className="size-5" />
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Messages view */}
-        <div ref={chatContainerRef} className="flex-1 overflow-y-auto p-5 sm:p-6 space-y-4">
+        <div ref={chatContainerRef} className="flex-1 overflow-y-auto p-5 sm:p-6 space-y-4 chat-scrollbar">
           <AnimatePresence initial={false}>
             {messages.map((msg, index) => {
               const isBot = msg.sender === "bot";
               return (
                 <motion.div
                   key={index}
-                  initial={{ opacity: 0, y: 15 }}
-                  animate={{ opacity: 1, y: 0 }}
+                  initial={{ opacity: 0, y: 15, scale: 0.97 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: -10, scale: 0.97 }}
                   transition={{ duration: 0.25 }}
                   className={`flex gap-3 max-w-[85%] ${isBot ? "self-start" : "self-end flex-row-reverse ml-auto"}`}
                 >
-                  <div className={`size-8 rounded-lg grid place-items-center shrink-0 shadow-sm ${
-                    isBot ? "bg-lime-gradient text-charcoal flex items-center justify-center p-1" : "bg-charcoal text-white"
+                  <div className={`size-8.5 rounded-xl grid place-items-center shrink-0 shadow-sm relative ${
+                    isBot ? "bg-lime-gradient text-charcoal flex items-center justify-center p-1.5" : "bg-charcoal text-white border border-white/10"
                   }`}>
                     {isBot ? <img src="/favicon.ico" alt="Signova Logo" className="size-full object-contain" /> : <User className="size-4" />}
                   </div>
@@ -599,8 +910,8 @@ export function AiChat({ isModal = false, onClose }: { isModal?: boolean; onClos
                   <div className="space-y-1">
                     <div className={`p-4 rounded-2xl leading-relaxed text-sm shadow-sm ${
                       isBot 
-                        ? "bg-card border border-border/60 text-foreground" 
-                        : "bg-primary text-primary-foreground font-medium rounded-tr-none"
+                        ? "message-glass border border-border/40 text-foreground" 
+                        : "bg-primary text-primary-foreground font-medium rounded-tr-none border border-primary/20"
                     }`}>
                       {msg.isRichHtml ? (
                         <div 
@@ -622,16 +933,18 @@ export function AiChat({ isModal = false, onClose }: { isModal?: boolean; onClos
           </AnimatePresence>
 
           {isTyping && (
-            <div className="flex gap-3 max-w-[85%] self-start animate-pulse">
-              <div className="size-8 rounded-lg bg-lime-gradient p-1 grid place-items-center shrink-0">
+            <div className="flex gap-3 max-w-[85%] self-start">
+              <div className="size-8.5 rounded-xl bg-lime-gradient p-1.5 grid place-items-center shrink-0">
                 <img src="/favicon.ico" alt="Signova Logo" className="size-full object-contain animate-bounce" />
               </div>
               <div className="space-y-1">
-                <div className="p-3.5 rounded-2xl bg-card border border-border/60 text-foreground flex items-center gap-1.5 text-sm">
-                  <span className="text-muted-foreground mr-1 text-xs font-semibold">{t.typingText}</span>
-                  <span className="size-1.5 bg-leaf rounded-full animate-bounce [animation-delay:-0.3s]" />
-                  <span className="size-1.5 bg-leaf rounded-full animate-bounce [animation-delay:-0.15s]" />
-                  <span className="size-1.5 bg-leaf rounded-full animate-bounce" />
+                <div className="p-3.5 rounded-2xl message-glass border border-border/40 text-foreground flex items-center gap-2 text-sm">
+                  <span className="text-muted-foreground text-xs font-semibold">Signova AI Thinking</span>
+                  <div className="flex gap-1 items-center">
+                    <span className="size-1.5 bg-leaf rounded-full animate-bounce [animation-delay:-0.3s]" />
+                    <span className="size-1.5 bg-leaf rounded-full animate-bounce [animation-delay:-0.15s]" />
+                    <span className="size-1.5 bg-leaf rounded-full animate-bounce" />
+                  </div>
                 </div>
               </div>
             </div>
@@ -639,49 +952,122 @@ export function AiChat({ isModal = false, onClose }: { isModal?: boolean; onClos
         </div>
 
         {/* Preset suggestions + Inputs */}
-        <div className="p-4 sm:p-5 border-t border-border/60 bg-gradient-to-t from-primary/5 via-transparent to-transparent space-y-4">
+        <div className="p-4 sm:p-5 border-t border-border/40 bg-gradient-to-t from-primary/5 via-transparent to-transparent space-y-4">
           
           {messages.length <= 1 && (
             <div className="space-y-2">
-              <span className="text-xs font-bold uppercase tracking-widest text-leaf flex items-center gap-1">
-                <Sparkles className="size-3 text-lime" /> {t.quickTitle}
+              <span className="text-[10px] font-bold uppercase tracking-widest text-deep dark:text-leaf select-none">
+                {t.quickTitle}
               </span>
-              <div className="flex flex-wrap gap-2">
-                {t.presets.map((preset, idx) => (
-                  <button
-                    key={idx}
-                    onClick={() => handleSend(preset)}
-                    className="px-4 py-2 text-xs sm:text-sm font-medium rounded-full bg-background hover:bg-primary hover:text-primary-foreground border border-border hover:border-primary transition-all active:scale-[0.98] shadow-2xs text-left"
-                  >
-                    {preset}
-                  </button>
-                ))}
+              <div className="relative flex items-center group/presets">
+                {/* Left Arrow with Fade Overlay */}
+                {canScrollPresetsLeft && (
+                  <div className="absolute left-0 top-0 bottom-0 w-12 bg-gradient-to-r from-background dark:from-[#0a0a0a] via-background/85 dark:via-[#0a0a0a]/85 to-transparent z-10 flex items-center pl-1 pointer-events-none">
+                    <button 
+                      type="button"
+                      onClick={() => scrollPresetsBar("left")}
+                      className="size-7 rounded-full bg-background dark:bg-[#121212] border border-border hover:border-primary hover:text-primary shadow-xs flex items-center justify-center text-foreground transition-all cursor-pointer pointer-events-auto active:scale-95"
+                      aria-label="Scroll Presets Left"
+                    >
+                      <ChevronLeft className="size-4.5" />
+                    </button>
+                  </div>
+                )}
+
+                {/* Scrollable Presets list */}
+                <div 
+                  ref={presetsBarRef}
+                  onScroll={checkPresetsScrollState}
+                  className={`flex overflow-x-auto gap-2 pb-1.5 scrollbar-none scroll-smooth w-full select-none ${
+                    (canScrollPresetsLeft || canScrollPresetsRight) ? "px-8" : ""
+                  }`}
+                >
+                  {t.presets.map((preset, idx) => (
+                    <button
+                      key={idx}
+                      onClick={() => handleSend(preset)}
+                      className="px-3 py-1.5 text-[11px] font-semibold whitespace-nowrap rounded-xl bg-deep/10 dark:bg-black/35 text-deep dark:text-foreground hover:bg-primary hover:text-primary-foreground border border-deep/20 dark:border-border/80 hover:border-primary transition-all flex items-center gap-1 cursor-pointer active:scale-[0.97]"
+                    >
+                      {preset}
+                    </button>
+                  ))}
+                </div>
+
+                {/* Right Arrow with Fade Overlay */}
+                {canScrollPresetsRight && (
+                  <div className="absolute right-0 top-0 bottom-0 w-12 bg-gradient-to-l from-background dark:from-[#0a0a0a] via-background/85 dark:via-[#0a0a0a]/85 to-transparent z-10 flex items-center justify-end pr-1 pointer-events-none">
+                    <button 
+                      type="button"
+                      onClick={() => scrollPresetsBar("right")}
+                      className="size-7 rounded-full bg-background dark:bg-[#121212] border border-border hover:border-primary hover:text-primary shadow-xs flex items-center justify-center text-foreground transition-all cursor-pointer pointer-events-auto active:scale-95"
+                      aria-label="Scroll Presets Right"
+                    >
+                      <ChevronRight className="size-4.5" />
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
           )}
 
-          <form 
-            onSubmit={(e) => {
-              e.preventDefault();
-              handleSend();
-            }}
-            className="flex gap-2 relative"
-          >
-            <Input
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              placeholder={t.placeholder}
-              className="flex-1 bg-background/90 border-border/80 focus:border-primary pr-14 pl-4 rounded-xl text-sm sm:text-base h-11 shadow-inner text-foreground"
-            />
-            <Button 
-              type="submit" 
-              size="icon" 
-              className="absolute right-1.5 top-1.5 h-8 w-8 bg-lime-gradient hover:opacity-90 active:scale-95 text-charcoal rounded-lg shadow-sm border-none"
-              aria-label="Send Message"
+          <div>
+            <form 
+              onSubmit={(e) => {
+                e.preventDefault();
+                handleSend();
+              }}
+              className="flex gap-2 relative group items-center"
             >
-              <Send className="size-3.5" />
-            </Button>
-          </form>
+              <div className="relative flex-1">
+                {/* Neon focus glow background ring */}
+                <div className="absolute -inset-0.5 bg-gradient-to-r from-primary/30 to-primary/20 dark:to-lime/30 rounded-2xl blur opacity-0 group-focus-within:opacity-100 transition duration-500" />
+                
+                {/* Input element */}
+                <Input
+                  value={input}
+                  onChange={(e) => setInput(e.target.value)}
+                  placeholder={t.placeholder}
+                  className="relative w-full bg-background/60 dark:bg-black/35 border border-border/80 focus-visible:ring-0 focus-visible:border-primary pr-28 pl-4 rounded-2xl text-sm sm:text-base h-12 shadow-sm text-foreground"
+                />
+
+                {/* Inline Action Buttons */}
+                <div className="absolute right-2 top-2 flex items-center gap-1 z-20">
+                  {/* Mic Dictation Button */}
+                  <Button
+                    type="button"
+                    size="icon"
+                    variant="ghost"
+                    onClick={toggleListening}
+                    className={`h-8 w-8 rounded-xl hover:bg-secondary/40 text-muted-foreground transition-all ${
+                      isListening ? "bg-red-500/10 text-red-500 hover:bg-red-500/20 border border-red-500/20 animate-pulse" : ""
+                    }`}
+                    title={isListening ? "Stop listening" : "Dictate message"}
+                  >
+                    {isListening ? (
+                      <MicOff className="size-4" />
+                    ) : (
+                      <Mic className="size-4" />
+                    )}
+                  </Button>
+
+                  {/* Send Button */}
+                  <Button 
+                    type="submit" 
+                    size="icon" 
+                    className="h-8 w-8 bg-lime-gradient hover:opacity-90 active:scale-95 text-charcoal rounded-xl shadow-sm border-none cursor-pointer"
+                    aria-label="Send Message"
+                  >
+                    <Send className="size-3.5" />
+                  </Button>
+                </div>
+              </div>
+            </form>
+            <div className="text-center mt-2.5">
+              <span className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground/60 select-none">
+                Powered by Signova AI
+              </span>
+            </div>
+          </div>
         </div>
 
       </Card>
@@ -690,24 +1076,189 @@ export function AiChat({ isModal = false, onClose }: { isModal?: boolean; onClos
 
   if (isModal) {
     return (
-      <div className="fixed inset-x-0 bottom-0 lg:inset-x-auto lg:bottom-6 lg:right-24 z-50 w-full lg:w-[440px] h-[100dvh] lg:h-[620px] flex flex-col lg:rounded-3xl border-0 lg:border border-border/60 bg-background lg:bg-popover lg:shadow-2xl overflow-hidden animate-fade-in select-none">
-        <style dangerouslySetInnerHTML={{ __html: `
-          .rich-chat-content h3 { font-size: 0.95rem !important; font-weight: 700 !important; color: #84cc16 !important; margin-bottom: 0.5rem !important; margin-top: 0.25rem !important; display: flex !important; align-items: center !important; gap: 0.375rem !important; }
-          .rich-chat-content p { font-size: 0.875rem !important; line-height: 1.55 !important; color: inherit !important; opacity: 0.95 !important; margin-bottom: 0.625rem !important; }
-          .rich-chat-content ul { font-size: 0.875rem !important; line-height: 1.55 !important; color: inherit !important; opacity: 0.92 !important; margin-top: 0.5rem !important; margin-bottom: 0.5rem !important; }
-          .rich-chat-content li { margin-bottom: 0.35rem !important; }
-          .rich-chat-content div { font-size: 0.775rem !important; line-height: 1.45 !important; margin-top: 0.75rem !important; padding: 0.75rem !important; border-radius: 0.75rem !important; background-color: rgba(255, 255, 255, 0.05) !important; border: 1px solid rgba(255, 255, 255, 0.08) !important; color: inherit !important; }
-          .scrollbar-none::-webkit-scrollbar { display: none !important; }
-          .scrollbar-none { -ms-overflow-style: none !important; scrollbar-width: none !important; }
-        `}} />
-        {renderChatCard()}
-      </div>
+      <>
+        {/* Full-screen Backdrop Overlay with exit transition support */}
+        <motion.div
+          initial={{ opacity: 0, backdropFilter: "blur(0px)" }}
+          animate={{ opacity: 1, backdropFilter: "blur(8px)" }}
+          exit={{ opacity: 0, backdropFilter: "blur(0px)" }}
+          onClick={onClose}
+          className="fixed inset-0 z-[49] bg-black/25 pointer-events-auto"
+        />
+
+        {/* Floating Modal Panel */}
+        <motion.div
+          initial={{ opacity: 0, y: 40, scale: 0.95, filter: "blur(10px)" }}
+          animate={{ opacity: 1, y: 0, scale: 1, filter: "blur(0px)" }}
+          exit={{ opacity: 0, y: 40, scale: 0.95, filter: "blur(10px)" }}
+          transition={{ duration: 0.3, ease: "easeOut" }}
+          className="fixed inset-x-0 bottom-0 sm:inset-x-auto sm:bottom-24 sm:right-6 z-50 w-full sm:w-[400px] max-w-[calc(100vw-32px)] h-[90dvh] sm:h-[600px] sm:max-h-[calc(100vh-120px)] flex flex-col rounded-t-3xl sm:rounded-3xl shadow-[0_32px_64px_-16px_rgba(0,0,0,0.2)] overflow-hidden glass-panel select-none pointer-events-auto"
+          style={isDesktop ? { width: `${modalSize.width}px`, height: `${modalSize.height}px` } : undefined}
+        >
+          {/* Resize Handles (Desktop Only) */}
+          {isDesktop && (
+            <>
+              {/* Left Edge resize handle */}
+              <div
+                onMouseDown={(e) => startResize(e, "w")}
+                className="absolute left-0 top-3 bottom-3 w-1.5 cursor-w-resize z-50 group flex items-center justify-center"
+                title="Drag to resize width"
+              >
+                <div className="w-[2px] h-10 bg-foreground/10 group-hover:bg-primary/40 rounded-full transition-colors" />
+              </div>
+              
+              {/* Top Edge resize handle */}
+              <div
+                onMouseDown={(e) => startResize(e, "n")}
+                className="absolute top-0 left-3 right-3 h-1.5 cursor-n-resize z-50 group flex items-center justify-center"
+                title="Drag to resize height"
+              >
+                <div className="h-[2px] w-10 bg-foreground/10 group-hover:bg-primary/40 rounded-full transition-colors" />
+              </div>
+              
+              {/* Top-Left Corner resize handle */}
+              <div
+                onMouseDown={(e) => startResize(e, "nw")}
+                className="absolute top-0 left-0 size-4 cursor-nw-resize z-50 rounded-tl-3xl hover:bg-primary/10 transition-colors"
+                title="Drag to resize"
+              />
+            </>
+          )}
+          <style dangerouslySetInnerHTML={{ __html: `
+            @keyframes spin-slow {
+              0% { transform: rotate(0deg); }
+              100% { transform: rotate(360deg); }
+            }
+            .animate-spin-slow {
+              animation: spin-slow 8s linear infinite;
+            }
+            .glass-panel {
+              background: rgba(255, 255, 255, 0.90);
+              backdrop-filter: blur(40px) saturate(200%);
+              -webkit-backdrop-filter: blur(40px) saturate(200%);
+              border: 1px solid rgba(9, 9, 11, 0.09);
+              box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.15);
+            }
+            .dark .glass-panel {
+              background: rgba(10, 10, 10, 0.75);
+              backdrop-filter: blur(40px) saturate(200%);
+              -webkit-backdrop-filter: blur(40px) saturate(200%);
+              border: 1px solid rgba(255, 255, 255, 0.08);
+            }
+            .message-glass {
+              background: rgba(244, 244, 245, 0.92);
+              backdrop-filter: blur(12px);
+              -webkit-backdrop-filter: blur(12px);
+              border: 1px solid rgba(9, 9, 11, 0.06);
+            }
+            .dark .message-glass {
+              background: rgba(255, 255, 255, 0.06);
+              backdrop-filter: blur(12px);
+              -webkit-backdrop-filter: blur(12px);
+              border: 1px solid rgba(255, 255, 255, 0.08);
+            }
+            .rich-chat-content span.bg-lime {
+              background-color: var(--primary) !important;
+            }
+            .dark .rich-chat-content span.bg-lime {
+              background-color: oklch(0.82 0.21 128) !important;
+            }
+            .chat-scrollbar::-webkit-scrollbar {
+              width: 6px;
+            }
+            .chat-scrollbar::-webkit-scrollbar-track {
+              background: transparent;
+            }
+            .chat-scrollbar::-webkit-scrollbar-thumb {
+              background: rgba(0, 0, 0, 0.1);
+              border-radius: 99px;
+            }
+            .dark .chat-scrollbar::-webkit-scrollbar-thumb {
+              background: rgba(255, 255, 255, 0.1);
+              border-radius: 99px;
+            }
+            .chat-scrollbar::-webkit-scrollbar-thumb:hover {
+              background: rgba(0, 0, 0, 0.2);
+            }
+            .dark .chat-scrollbar::-webkit-scrollbar-thumb:hover {
+              background: rgba(255, 255, 255, 0.2);
+            }
+            .rich-chat-content h3 { font-size: 0.95rem !important; font-weight: 700 !important; color: var(--primary) !important; margin-bottom: 0.5rem !important; margin-top: 0.25rem !important; display: flex !important; align-items: center !important; gap: 0.375rem !important; }
+            .dark .rich-chat-content h3 { color: oklch(0.82 0.21 128) !important; }
+            .rich-chat-content p { font-size: 0.875rem !important; line-height: 1.55 !important; color: inherit !important; opacity: 0.95 !important; margin-bottom: 0.625rem !important; }
+            .rich-chat-content ul { font-size: 0.875rem !important; line-height: 1.55 !important; color: inherit !important; opacity: 0.92 !important; margin-top: 0.5rem !important; margin-bottom: 0.5rem !important; }
+            .rich-chat-content li { margin-bottom: 0.35rem !important; }
+            .rich-chat-content div { font-size: 0.775rem !important; line-height: 1.45 !important; margin-top: 0.75rem !important; padding: 0.75rem !important; border-radius: 0.75rem !important; background-color: rgba(255, 255, 255, 0.05) !important; border: 1px solid rgba(255, 255, 255, 0.08) !important; color: inherit !important; }
+            .scrollbar-none::-webkit-scrollbar { display: none !important; }
+            .scrollbar-none { -ms-overflow-style: none !important; scrollbar-width: none !important; }
+          `}} />
+          {renderChatCard()}
+        </motion.div>
+      </>
     );
   }
 
   return (
     <div className="h-[calc(100dvh)] lg:h-screen bg-background relative pt-20 lg:pt-28 pb-4 lg:pb-6 overflow-hidden flex flex-col items-center">
       <style dangerouslySetInnerHTML={{ __html: `
+        @keyframes spin-slow {
+          0% { transform: rotate(0deg); }
+          100% { transform: rotate(360deg); }
+        }
+        .animate-spin-slow {
+          animation: spin-slow 8s linear infinite;
+        }
+        .glass-panel {
+          background: rgba(255, 255, 255, 0.90);
+          backdrop-filter: blur(40px) saturate(200%);
+          -webkit-backdrop-filter: blur(40px) saturate(200%);
+          border: 1px solid rgba(9, 9, 11, 0.09);
+          box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.15);
+        }
+        .dark .glass-panel {
+          background: rgba(10, 10, 10, 0.75);
+          backdrop-filter: blur(40px) saturate(200%);
+          -webkit-backdrop-filter: blur(40px) saturate(200%);
+          border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        .message-glass {
+          background: rgba(244, 244, 245, 0.92);
+          backdrop-filter: blur(12px);
+          -webkit-backdrop-filter: blur(12px);
+          border: 1px solid rgba(9, 9, 11, 0.06);
+        }
+        .dark .message-glass {
+          background: rgba(255, 255, 255, 0.06);
+          backdrop-filter: blur(12px);
+          -webkit-backdrop-filter: blur(12px);
+          border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        .rich-chat-content span.bg-lime {
+          background-color: var(--primary) !important;
+        }
+        .dark .rich-chat-content span.bg-lime {
+          background-color: oklch(0.82 0.21 128) !important;
+        }
+        .chat-scrollbar::-webkit-scrollbar {
+          width: 6px;
+        }
+        .chat-scrollbar::-webkit-scrollbar-track {
+          background: transparent;
+        }
+        .chat-scrollbar::-webkit-scrollbar-thumb {
+          background: rgba(0, 0, 0, 0.1);
+          border-radius: 99px;
+        }
+        .dark .chat-scrollbar::-webkit-scrollbar-thumb {
+          background: rgba(255, 255, 255, 0.1);
+          border-radius: 99px;
+        }
+        .chat-scrollbar::-webkit-scrollbar-thumb:hover {
+          background: rgba(0, 0, 0, 0.2);
+        }
+        .dark .chat-scrollbar::-webkit-scrollbar-thumb:hover {
+          background: rgba(255, 255, 255, 0.2);
+        }
         .rich-chat-content h3 { font-size: 0.95rem !important; font-weight: 700 !important; color: #84cc16 !important; margin-bottom: 0.5rem !important; margin-top: 0.25rem !important; display: flex !important; align-items: center !important; gap: 0.375rem !important; }
         .rich-chat-content p { font-size: 0.875rem !important; line-height: 1.55 !important; color: inherit !important; opacity: 0.95 !important; margin-bottom: 0.625rem !important; }
         .rich-chat-content ul { font-size: 0.875rem !important; line-height: 1.55 !important; color: inherit !important; opacity: 0.92 !important; margin-top: 0.5rem !important; margin-bottom: 0.5rem !important; }
@@ -718,8 +1269,8 @@ export function AiChat({ isModal = false, onClose }: { isModal?: boolean; onClos
       `}} />
 
       <div className="absolute inset-0 grid-pattern opacity-20 pointer-events-none z-0" />
-      <div className="absolute -top-40 -right-40 size-[600px] rounded-full bg-gradient-to-br from-lime/20 via-leaf/10 to-transparent blur-3xl pointer-events-none z-0" />
-      <div className="absolute -bottom-40 -left-40 size-[600px] rounded-full bg-gradient-to-tr from-primary/10 via-lime/5 to-transparent blur-3xl pointer-events-none z-0" />
+      <div className="absolute -top-40 -right-40 size-[600px] rounded-full bg-gradient-to-br from-primary/20 dark:from-lime/20 via-leaf/10 to-transparent blur-3xl pointer-events-none z-0" />
+      <div className="absolute -bottom-40 -left-40 size-[600px] rounded-full bg-gradient-to-tr from-primary/10 via-primary/5 dark:via-lime/5 to-transparent blur-3xl pointer-events-none z-0" />
 
       <div className="max-w-5xl w-full px-4 sm:px-6 relative z-10 flex-1 flex flex-col overflow-hidden min-h-0">
         <div className="mb-3 lg:mb-5 shrink-0">
@@ -732,21 +1283,41 @@ export function AiChat({ isModal = false, onClose }: { isModal?: boolean; onClos
         <div className="grid lg:grid-cols-12 gap-6 flex-1 min-h-0 items-stretch overflow-hidden">
           
           {/* Left panel: Info & Language Selector */}
-          <div className="hidden lg:flex lg:col-span-4 flex-col gap-5 overflow-y-auto pr-1 select-none shrink-0 min-h-0">
-            <Card className="glass shadow-card border-border/60 rounded-3xl overflow-hidden flex flex-col">
-              <div className="p-6 border-b border-border/60 bg-gradient-to-br from-primary/5 via-transparent to-transparent flex items-center gap-3">
-                <div className="size-10 rounded-xl bg-lime-gradient p-1.5 shrink-0 shadow-sm flex items-center justify-center">
-                  <img src="/favicon.ico" alt="Signova Logo" className="size-full object-contain" />
+          <div className="hidden lg:flex lg:col-span-4 flex-col gap-5 overflow-y-auto pr-1 select-none shrink-0 min-h-0 chat-scrollbar">
+            <Card className="glass-panel border-none shadow-[0_16px_32px_rgba(0,0,0,0.05)] rounded-3xl overflow-hidden flex flex-col">
+              <div className="p-6 border-b border-border/40 bg-gradient-to-br from-primary/10 via-transparent to-transparent flex items-center gap-4">
+                
+                {/* Glowing Avatar */}
+                <div className="relative shrink-0 select-none">
+                  {/* Outer rotating gradient ring */}
+                  <div className="absolute -inset-0.5 rounded-xl bg-gradient-to-tr from-primary via-primary dark:via-lime to-emerald-500 opacity-80 blur-[2px] animate-spin-slow" />
+                  {/* Inner container */}
+                  <div className="relative size-11 rounded-xl bg-charcoal p-2 flex items-center justify-center border border-white/10 z-10">
+                    <img src="/favicon.ico" alt="Signova Logo" className="size-full object-contain" />
+                  </div>
+                  {/* Multi-layered status ping */}
+                  <span className="absolute -bottom-1 -right-1 z-20 flex size-3">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-30 scale-150 [animation-delay:0.2s]" />
+                    <span className="relative inline-flex rounded-full size-3 bg-emerald-500 border border-background shadow-xs" />
+                  </span>
                 </div>
+
                 <div>
-                  <h2 className="text-lg font-bold text-foreground">{t.headerTitle}</h2>
-                  <p className="text-xs text-muted-foreground">{t.headerSub}</p>
+                  <h2 className="text-lg font-extrabold text-foreground tracking-tight">
+                    <span className="bg-gradient-to-r from-foreground to-foreground/80 bg-clip-text text-transparent">
+                      {t.headerTitle}
+                    </span>
+                  </h2>
+                  <p className="text-xs text-muted-foreground mt-1 font-medium">
+                    {t.headerSub}
+                  </p>
                 </div>
               </div>
               
               <CardContent className="p-6 flex-1 flex flex-col gap-6">
                 <div className="space-y-3">
-                  <span className="text-[10px] font-bold uppercase tracking-widest text-leaf flex items-center gap-1.5 font-bold">
+                  <span className="text-[10px] font-bold uppercase tracking-widest text-deep dark:text-leaf flex items-center gap-1.5">
                     <Globe className="size-3.5" /> Select Language / भाषा चुनें
                   </span>
                   
@@ -758,24 +1329,21 @@ export function AiChat({ isModal = false, onClose }: { isModal?: boolean; onClos
                         <button
                           key={key}
                           onClick={() => handleLangChange(key)}
-                          className={`flex flex-col items-center justify-center p-2.5 rounded-xl border text-center transition-all ${
+                          className={`flex flex-col items-center justify-center p-2.5 rounded-xl border text-center transition-all cursor-pointer active:scale-95 ${
                             active 
                               ? "bg-primary text-primary-foreground border-primary scale-[1.02] shadow-inner font-bold" 
-                              : "bg-background hover:bg-secondary/40 text-foreground/80 hover:text-foreground border-border/80"
+                              : "bg-deep/10 dark:bg-black/50 text-deep dark:text-foreground border-deep/20 dark:border-border/80 hover:bg-deep/20"
                           }`}
                         >
                           <span className="text-sm">{langConfig.nativeName}</span>
-                          <span className={`text-[10px] mt-0.5 opacity-70 ${active ? "text-lime font-medium" : "text-muted-foreground"}`}>
-                            ({langConfig.name})
-                          </span>
                         </button>
                       );
                     })}
                   </div>
                 </div>
 
-                <div className="rounded-2xl border border-border/60 bg-muted/30 p-4 space-y-3">
-                  <span className="text-[10px] font-bold uppercase tracking-widest text-leaf flex items-center gap-1">
+                <div className="rounded-2xl border border-border/40 bg-muted/20 p-4 space-y-3">
+                  <span className="text-[10px] font-bold uppercase tracking-widest text-deep dark:text-leaf flex items-center gap-1">
                     <HelpCircle className="size-3.5" /> Quick Agro Guides
                   </span>
                   <p className="text-xs leading-relaxed text-muted-foreground">
@@ -788,9 +1356,9 @@ export function AiChat({ isModal = false, onClose }: { isModal?: boolean; onClos
                     className="inline-flex items-center justify-between w-full p-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/25 hover:bg-emerald-500/20 text-emerald-500 text-xs font-semibold group transition-all"
                   >
                     <span className="flex items-center gap-2">
-                      <Phone className="size-3.5 text-lime" /> Talk to Field Officer
+                      <Phone className="size-3.5 text-primary dark:text-lime" /> Talk to Field Officer
                     </span>
-                    <ArrowUpRight className="size-4 text-lime group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
+                    <ArrowUpRight className="size-4 text-primary dark:text-lime group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
                   </a>
                 </div>
               </CardContent>
@@ -1223,4 +1791,60 @@ Always write structured, farmer-friendly, warm and actionable advice. Use bullet
     console.error("Gemini fetch failed:", err);
     throw err;
   }
+}
+
+// -------------------------------------------------------------
+// PREMIUM MARKDOWN-TO-HTML FORMATTER FOR AI CHATBOT RESPONSES
+// -------------------------------------------------------------
+function formatMarkdownToHtml(md: string): string {
+  let html = md;
+  
+  // 1. Replace headers ### text to <h3>text</h3>
+  html = html.replace(/^### (.*?)$/gm, '<h3 class="text-sm font-bold text-leaf flex items-center gap-1.5"><span class="size-2 rounded-full bg-lime shrink-0"></span> $1</h3>');
+  html = html.replace(/^## (.*?)$/gm, '<h3 class="text-sm font-bold text-leaf flex items-center gap-1.5"><span class="size-2 rounded-full bg-lime shrink-0"></span> $1</h3>');
+  html = html.replace(/^# (.*?)$/gm, '<h3 class="text-base font-extrabold text-leaf flex items-center gap-1.5"><span class="size-2.5 rounded-full bg-lime shrink-0"></span> $1</h3>');
+
+  // 2. Replace bold **text** to <strong>text</strong>
+  html = html.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+
+  // 3. Process bullet lists (lines starting with - or *)
+  const lines = html.split('\n');
+  let inList = false;
+  const processedLines = [];
+
+  for (let line of lines) {
+    const trimmed = line.trim();
+    if (trimmed.startsWith('- ') || trimmed.startsWith('* ')) {
+      const content = trimmed.substring(2);
+      if (!inList) {
+        processedLines.push('<ul class="list-disc pl-4 space-y-1 mt-2 text-xs">');
+        inList = true;
+      }
+      processedLines.push(`<li>${content}</li>`);
+    } else {
+      if (inList) {
+        processedLines.push('</ul>');
+        inList = false;
+      }
+      processedLines.push(line);
+    }
+  }
+  if (inList) {
+    processedLines.push('</ul>');
+  }
+
+  html = processedLines.join('\n');
+
+  // 4. Wrap non-html paragraphs in <p> tags with inline breaks
+  const blocks = html.split(/\n\n+/);
+  const formattedBlocks = blocks.map(block => {
+    const trimmed = block.trim();
+    if (!trimmed) return "";
+    if (trimmed.startsWith('<h') || trimmed.startsWith('<ul') || trimmed.startsWith('<div')) {
+      return trimmed;
+    }
+    return `<p>${trimmed.replace(/\n/g, '<br />')}</p>`;
+  });
+  
+  return formattedBlocks.filter(Boolean).join('\n');
 }

@@ -1,7 +1,8 @@
 import { useChatModal } from "@/lib/chat-modal";
-import { Sparkles } from "lucide-react";
+import { Sparkles, X } from "lucide-react";
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
+import { motion, AnimatePresence } from "framer-motion";
 
 export function AiChatFab() {
   const [showTooltip, setShowTooltip] = useState(false);
@@ -36,13 +37,20 @@ export function AiChatFab() {
   }, []);
 
   useEffect(() => {
-    // Show a subtle welcoming hint after 3 seconds, then hide it after 8 seconds
+    // Show a subtle welcoming hint after 3 seconds, then hide it after 9 seconds
     const showTimer = setTimeout(() => setShowTooltip(true), 3000);
     const hideTimer = setTimeout(() => setShowTooltip(false), 9000);
+
+    // Show tooltip repeatedly every 60 seconds (every minute) for 6 seconds
+    const interval = setInterval(() => {
+      setShowTooltip(true);
+      setTimeout(() => setShowTooltip(false), 6000);
+    }, 60000);
 
     return () => {
       clearTimeout(showTimer);
       clearTimeout(hideTimer);
+      clearInterval(interval);
     };
   }, []);
 
@@ -64,17 +72,55 @@ export function AiChatFab() {
         </span>
       </div>
 
-      <button
-        onClick={() => setIsOpen(!isOpen)}
-        onMouseEnter={() => setShowTooltip(true)}
-        onMouseLeave={() => setShowTooltip(false)}
-        className={`size-14 rounded-full text-white grid place-items-center shadow-glow border border-lime/30 hover:scale-110 active:scale-95 transition-all animate-float [animation-delay:1.5s] ${
-          isOpen ? "bg-charcoal border-white/20" : "bg-hero"
-        }`}
-        aria-label="AI Crop Advisor"
-      >
-        <Sparkles className="size-6 text-lime animate-pulse" />
-      </button>
+      <div className="relative">
+        {/* Pulsing Backlight Ring when closed */}
+        {!isOpen && (
+          <motion.div 
+            animate={{ scale: [1, 1.35, 1], opacity: [0.5, 0, 0.5] }} 
+            transition={{ duration: 2.2, repeat: Infinity, ease: "easeInOut" }} 
+            className="absolute -inset-1.5 rounded-full bg-lime/25 z-[-1] pointer-events-none blur-[1px]" 
+          />
+        )}
+
+        {/* Small Red Notification Alert Dot */}
+        {!isOpen && (
+          <span className="absolute -top-0.5 -right-0.5 z-20 flex size-3">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75" />
+            <span className="relative inline-flex rounded-full size-3 bg-red-500 border border-background shadow-xs" />
+          </span>
+        )}
+
+        <motion.button
+          onClick={() => setIsOpen(!isOpen)}
+          onMouseEnter={() => setShowTooltip(true)}
+          onMouseLeave={() => setShowTooltip(false)}
+          whileHover={{ scale: 1.08 }}
+          whileTap={{ scale: 0.95 }}
+          className={`size-14 rounded-full text-white grid place-items-center shadow-glow border border-lime/30 transition-all cursor-pointer ${
+            isOpen 
+              ? "bg-white/15 dark:bg-black/35 backdrop-blur-md border-white/15 text-foreground hover:bg-white/20 hover:dark:bg-black/45" 
+              : "bg-hero"
+          }`}
+          aria-label="AI Crop Advisor"
+        >
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={isOpen ? "open" : "closed"}
+              initial={{ rotate: -90, opacity: 0, scale: 0.7 }}
+              animate={{ rotate: 0, opacity: 1, scale: 1 }}
+              exit={{ rotate: 90, opacity: 0, scale: 0.7 }}
+              transition={{ duration: 0.2 }}
+              className="grid place-items-center"
+            >
+              {isOpen ? (
+                <X className="size-6 text-foreground" />
+              ) : (
+                <Sparkles className="size-6 text-lime fill-lime/10" />
+              )}
+            </motion.div>
+          </AnimatePresence>
+        </motion.button>
+      </div>
     </div>
   );
 }

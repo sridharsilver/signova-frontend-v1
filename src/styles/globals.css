@@ -78,9 +78,9 @@
   --ring: oklch(0.55 0.15 142);
 
   --gradient-hero: linear-gradient(135deg, oklch(0.32 0.09 145) 0%, oklch(0.18 0.05 155) 60%, oklch(0.12 0.02 160) 100%);
-  --gradient-lime: linear-gradient(135deg, oklch(0.82 0.21 128), oklch(0.55 0.15 142));
-  --gradient-glow: radial-gradient(circle at 30% 20%, oklch(0.82 0.21 128 / 0.35), transparent 60%);
-  --shadow-glow: 0 20px 60px -20px oklch(0.55 0.15 142 / 0.45);
+  --gradient-lime: linear-gradient(135deg, oklch(0.32 0.09 145), oklch(0.22 0.06 150));
+  --gradient-glow: radial-gradient(circle at 30% 20%, oklch(0.32 0.09 145 / 0.35), transparent 60%);
+  --shadow-glow: 0 20px 60px -20px oklch(0.32 0.09 145 / 0.45);
   --shadow-card: 0 10px 40px -15px oklch(0.32 0.09 145 / 0.18);
 }
 
@@ -102,6 +102,7 @@
   --border: oklch(1 0 0 / 10%);
   --input: oklch(1 0 0 / 12%);
   --ring: oklch(0.82 0.21 128);
+  --gradient-lime: linear-gradient(135deg, oklch(0.82 0.21 128), oklch(0.55 0.15 142));
 }
 
 @keyframes fade-in {
