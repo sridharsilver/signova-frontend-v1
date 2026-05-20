@@ -12,9 +12,16 @@ type ThemeContextValue = {
 const ThemeContext = createContext<ThemeContextValue | undefined>(undefined);
 
 function getInitialTheme(): Theme {
-  if (typeof document === "undefined") return "light";
-  if (document.documentElement.classList.contains("dark")) return "dark";
-  return "light";
+  if (typeof localStorage !== "undefined") {
+    try {
+      const saved = localStorage.getItem("theme");
+      if (saved === "light" || saved === "dark") return saved;
+    } catch {}
+  }
+  if (typeof document !== "undefined" && document.documentElement.classList.contains("dark")) {
+    return "dark";
+  }
+  return "dark";
 }
 
 function lightenColor(hex: string, percent: number): string {

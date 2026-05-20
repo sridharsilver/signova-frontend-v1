@@ -29,7 +29,7 @@
       (function(){
         try {
           var t = localStorage.getItem('theme');
-          var d = t ? t === 'dark' : window.matchMedia('(prefers-color-scheme: dark)').matches;
+          var d = t ? t !== 'light' : true;
           if (d) document.documentElement.classList.add('dark');
         } catch (e) {}
       })();
