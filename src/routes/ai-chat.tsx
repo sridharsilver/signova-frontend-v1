@@ -1731,7 +1731,7 @@ function getLocalAgroResponse(prompt: string, lang: LanguageKey): string {
       <p>Thank you for asking! I want to help you optimize your crop health. While this exact query is not loaded in our built-in product dataset, here are three easy ways to get answers:</p>
       <ul class="list-disc pl-4 space-y-1 mt-2 text-xs">
         <li><strong>Read Expert Guides:</strong> Check out our Knowledge Centre for crop nutrition sheets.</li>
-        <li><strong>Live Expert Call:</strong> Call our field agronomists at <strong>+91 98765 43210</strong>.</li>
+        <li><strong>Live Expert Call:</strong> Call our field agronomists at +91 98765 43210.</li>
         <li><strong>Unlock Gemini AI:</strong> Click the <strong>Settings Cog</strong> at the top right, enter your Gemini API key, and experience fully intelligent, unrestricted agricultural chat!</li>
       </ul>
     `,
