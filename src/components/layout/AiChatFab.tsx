@@ -2,7 +2,7 @@ import { useChatModal } from "@/lib/chat-modal";
 import { Sparkles, X } from "lucide-react";
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, useMotionValue } from "framer-motion";
 
 export function AiChatFab() {
   const [showTooltip, setShowTooltip] = useState(false);
@@ -70,6 +70,33 @@ export function AiChatFab() {
     return () => window.removeEventListener("resize", checkConstraints);
   }, []);
 
+  const [initialX] = useState(() => {
+    try {
+      const saved = sessionStorage.getItem("signova_fab_drag_x");
+      return saved ? parseFloat(saved) : 0;
+    } catch {
+      return 0;
+    }
+  });
+  const [initialY] = useState(() => {
+    try {
+      const saved = sessionStorage.getItem("signova_fab_drag_y");
+      return saved ? parseFloat(saved) : 0;
+    } catch {
+      return 0;
+    }
+  });
+
+  const dragX = useMotionValue(initialX);
+  const dragY = useMotionValue(initialY);
+
+  const handleDragEnd = () => {
+    try {
+      sessionStorage.setItem("signova_fab_drag_x", dragX.get().toString());
+      sessionStorage.setItem("signova_fab_drag_y", dragY.get().toString());
+    } catch (e) {}
+  };
+
   if (!isVisible) return null;
 
   return (
@@ -78,6 +105,8 @@ export function AiChatFab() {
       dragConstraints={dragConstraints}
       dragElastic={0.15}
       dragMomentum={false}
+      style={{ x: dragX, y: dragY }}
+      onDragEnd={handleDragEnd}
       className="fixed bottom-6 right-6 z-[99] flex items-center gap-3 touch-none select-none cursor-grab active:cursor-grabbing"
     >
       {/* Dynamic Hint Tooltip */}
