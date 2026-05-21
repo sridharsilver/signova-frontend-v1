@@ -5,39 +5,10 @@ import logo from "@/assets/images/signova-logo.png";
 import { ThemeToggle } from "./ThemeToggle";
 import { chatModalStore } from "@/lib/chat-modal";
 import { useLanguage, LANGUAGES } from "@/hooks/use-language";
-
-type SubLink = { to: string; label: string; desc?: string };
-type NavItem = { label: string; to?: string; children?: SubLink[] };
-
-const nav: NavItem[] = [
-  { label: "Home", to: "/" },
-  {
-    label: "Company",
-    children: [
-      { to: "/about", label: "About Us", desc: "Our story, mission & vision" },
-      { to: "/innovation", label: "R&D and Innovation", desc: "Science behind Signova" },
-      { to: "/careers", label: "Careers", desc: "Join our growing team" },
-    ],
-  },
-  {
-    label: "Solutions",
-    children: [
-      { to: "/products", label: "Products", desc: "Micronutrients, bio & nano-tech" },
-      { to: "/crops", label: "Crop Programs", desc: "Tailored crop nutrition" },
-      { to: "/knowledge", label: "Knowledge Centre", desc: "Guides, blogs & research" },
-      { to: "/ai-chat", label: "AI Crop Advisor", desc: "Multilingual expert crop help" },
-    ],
-  },
-  {
-    label: "Partner",
-    children: [
-      { to: "/distributor", label: "Become Distributor", desc: "Grow with Signova" },
-      { to: "/contact", label: "Contact Us", desc: "Talk to our team" },
-    ],
-  },
-];
+import { useMenu } from "@/hooks/use-menu";
 
 export function Navbar() {
+  const { groups, cta } = useMenu();
   const [open, setOpen] = useState(false);
   const [openMenu, setOpenMenu] = useState<string | null>(null);
   const [openMobileGroup, setOpenMobileGroup] = useState<string | null>(null);
@@ -91,15 +62,15 @@ export function Navbar() {
     langTimer.current = setTimeout(() => setLangOpen(false), 120);
   };
 
-  const isChildActive = (item: NavItem) =>
-    item.children?.some((c) => c.to === path) ?? false;
+  const isChildActive = (item: any) =>
+    item.children?.some((c: any) => c.to === path) ?? false;
 
-  const translateLabel = (label: string) => {
-    switch (label) {
-      case "Home": return t("navbar.home");
-      case "Company": return t("navbar.company");
-      case "Solutions": return t("navbar.solutions");
-      case "Partner": return t("navbar.partner");
+  const translateLabel = (label: string, id: string) => {
+    switch (id) {
+      case "home": return t("navbar.home");
+      case "company": return t("navbar.company");
+      case "solutions": return t("navbar.solutions");
+      case "partner": return t("navbar.partner");
       default: return label;
     }
   };
@@ -157,31 +128,31 @@ export function Navbar() {
           </Link>
 
           <nav className="hidden lg:flex items-center gap-1">
-            {nav.map((item) => {
-              if (!item.children) {
+            {groups.map((item) => {
+              if (!item.children || item.children.length === 0) {
                 const active = path === item.to;
                 return (
                   <Link
-                    key={item.label}
-                    to={item.to!}
+                    key={item.id}
+                    to={item.to as any}
                     className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
                       active
                         ? "text-primary-text bg-secondary"
                         : "text-foreground/80 hover:text-primary-text hover:bg-secondary/60"
                     }`}
                   >
-                    {translateLabel(item.label)}
+                    {translateLabel(item.label, item.id)}
                   </Link>
                 );
               }
 
               const active = isChildActive(item);
-              const isOpen = openMenu === item.label;
+              const isOpen = openMenu === item.id;
               return (
                 <div
-                  key={item.label}
+                  key={item.id}
                   className="relative"
-                  onMouseEnter={() => handleEnter(item.label)}
+                  onMouseEnter={() => handleEnter(item.id)}
                   onMouseLeave={handleLeave}
                 >
                   <button
@@ -191,7 +162,7 @@ export function Navbar() {
                         : "text-foreground/80 hover:text-primary-text hover:bg-secondary/60"
                     }`}
                   >
-                    {translateLabel(item.label)}
+                    {translateLabel(item.label, item.id)}
                     <ChevronDown
                       className={`size-3.5 transition-transform ${isOpen ? "rotate-180" : ""}`}
                     />
@@ -204,8 +175,8 @@ export function Navbar() {
                           const childActive = path === c.to;
                           return (
                             <Link
-                              key={c.to}
-                              to={c.to}
+                              key={c.id}
+                              to={c.to as any}
                               onClick={(e) => {
                                 if (c.to === "/ai-chat") {
                                   e.preventDefault();
@@ -288,12 +259,14 @@ export function Navbar() {
             )}
 
             <ThemeToggle />
-            <Link
-              to="/distributor"
-              className="px-5 py-2.5 rounded-xl bg-primary text-primary-foreground text-sm font-semibold hover:opacity-90 transition shadow-card"
-            >
-              {t("navbar.becomeDistributor")}
-            </Link>
+            {cta.visible && (
+              <Link
+                to={cta.to as any}
+                className="px-5 py-2.5 rounded-xl bg-primary text-primary-foreground text-sm font-semibold hover:opacity-90 transition shadow-card"
+              >
+                {cta.to === "/distributor" ? t("navbar.becomeDistributor") : cta.label}
+              </Link>
+            )}
           </div>
 
           <div className="lg:hidden flex items-center gap-1">
@@ -362,28 +335,28 @@ export function Navbar() {
         {open && (
           <div className="lg:hidden mt-2 glass rounded-2xl p-3 shadow-card animate-fade-in max-h-[80vh] overflow-y-auto">
             <div className="flex flex-col gap-1">
-              {nav.map((item) => {
-                if (!item.children) {
+              {groups.map((item) => {
+                if (!item.children || item.children.length === 0) {
                   return (
                     <Link
-                      key={item.label}
-                      to={item.to!}
+                      key={item.id}
+                      to={item.to as any}
                       className="px-3 py-2.5 rounded-lg text-sm font-medium hover:bg-secondary"
                     >
-                      {translateLabel(item.label)}
+                      {translateLabel(item.label, item.id)}
                     </Link>
                   );
                 }
-                const isOpen = openMobileGroup === item.label;
+                const isOpen = openMobileGroup === item.id;
                 return (
-                  <div key={item.label}>
+                  <div key={item.id}>
                     <button
                       onClick={() =>
-                        setOpenMobileGroup(isOpen ? null : item.label)
+                        setOpenMobileGroup(isOpen ? null : item.id)
                       }
                       className="w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-sm font-semibold hover:bg-secondary"
                     >
-                      {translateLabel(item.label)}
+                      {translateLabel(item.label, item.id)}
                       <ChevronDown
                         className={`size-4 transition-transform ${isOpen ? "rotate-180" : ""}`}
                       />
@@ -392,8 +365,8 @@ export function Navbar() {
                       <div className="ml-2 mt-1 mb-1 border-l border-border/60 pl-3 flex flex-col gap-0.5">
                         {item.children.map((c) => (
                           <Link
-                            key={c.to}
-                            to={c.to}
+                            key={c.id}
+                            to={c.to as any}
                             onClick={(e) => {
                               if (c.to === "/ai-chat") {
                                 e.preventDefault();
@@ -411,12 +384,14 @@ export function Navbar() {
                   </div>
                 );
               })}
-              <Link
-                to="/distributor"
-                className="mt-2 px-4 py-2.5 rounded-xl bg-primary text-primary-foreground text-sm font-semibold text-center"
-              >
-                {t("navbar.becomeDistributor")}
-              </Link>
+              {cta.visible && (
+                <Link
+                  to={cta.to as any}
+                  className="mt-2 px-4 py-2.5 rounded-xl bg-primary text-primary-foreground text-sm font-semibold text-center"
+                >
+                  {cta.to === "/distributor" ? t("navbar.becomeDistributor") : cta.label}
+                </Link>
+              )}
             </div>
           </div>
         )}
