@@ -20,6 +20,7 @@ import { Route as AiChatRouteImport } from './routes/ai-chat'
 import { Route as AboutRouteImport } from './routes/about'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as KnowledgeSlugRouteImport } from './routes/knowledge.$slug'
+import { Route as CropsSlugNutrientsRouteImport } from './routes/crops_.$slug.nutrients'
 
 const ProductsRoute = ProductsRouteImport.update({
   id: '/products',
@@ -76,6 +77,11 @@ const KnowledgeSlugRoute = KnowledgeSlugRouteImport.update({
   path: '/$slug',
   getParentRoute: () => KnowledgeRoute,
 } as any)
+const CropsSlugNutrientsRoute = CropsSlugNutrientsRouteImport.update({
+  id: '/crops_/$slug/nutrients',
+  path: '/crops/$slug/nutrients',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -89,6 +95,7 @@ export interface FileRoutesByFullPath {
   '/knowledge': typeof KnowledgeRouteWithChildren
   '/products': typeof ProductsRoute
   '/knowledge/$slug': typeof KnowledgeSlugRoute
+  '/crops/$slug/nutrients': typeof CropsSlugNutrientsRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -102,6 +109,7 @@ export interface FileRoutesByTo {
   '/knowledge': typeof KnowledgeRouteWithChildren
   '/products': typeof ProductsRoute
   '/knowledge/$slug': typeof KnowledgeSlugRoute
+  '/crops/$slug/nutrients': typeof CropsSlugNutrientsRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -116,6 +124,7 @@ export interface FileRoutesById {
   '/knowledge': typeof KnowledgeRouteWithChildren
   '/products': typeof ProductsRoute
   '/knowledge/$slug': typeof KnowledgeSlugRoute
+  '/crops_/$slug/nutrients': typeof CropsSlugNutrientsRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -131,6 +140,7 @@ export interface FileRouteTypes {
     | '/knowledge'
     | '/products'
     | '/knowledge/$slug'
+    | '/crops/$slug/nutrients'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -144,6 +154,7 @@ export interface FileRouteTypes {
     | '/knowledge'
     | '/products'
     | '/knowledge/$slug'
+    | '/crops/$slug/nutrients'
   id:
     | '__root__'
     | '/'
@@ -157,6 +168,7 @@ export interface FileRouteTypes {
     | '/knowledge'
     | '/products'
     | '/knowledge/$slug'
+    | '/crops_/$slug/nutrients'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -170,6 +182,7 @@ export interface RootRouteChildren {
   InnovationRoute: typeof InnovationRoute
   KnowledgeRoute: typeof KnowledgeRouteWithChildren
   ProductsRoute: typeof ProductsRoute
+  CropsSlugNutrientsRoute: typeof CropsSlugNutrientsRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -251,6 +264,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof KnowledgeSlugRouteImport
       parentRoute: typeof KnowledgeRoute
     }
+    '/crops_/$slug/nutrients': {
+      id: '/crops_/$slug/nutrients'
+      path: '/crops/$slug/nutrients'
+      fullPath: '/crops/$slug/nutrients'
+      preLoaderRoute: typeof CropsSlugNutrientsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -277,6 +297,7 @@ const rootRouteChildren: RootRouteChildren = {
   InnovationRoute: InnovationRoute,
   KnowledgeRoute: KnowledgeRouteWithChildren,
   ProductsRoute: ProductsRoute,
+  CropsSlugNutrientsRoute: CropsSlugNutrientsRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

@@ -508,7 +508,7 @@ function HomePage() {
 
             {/* Navigation Dots */}
             <div className="flex gap-2">
-              {heroSettings.slides.map((_, index) => (
+              {heroSettings.slides.map((_: any, index: number) => (
                 <button
                   key={index}
                   onClick={() => setCurrentSlide(index)}
