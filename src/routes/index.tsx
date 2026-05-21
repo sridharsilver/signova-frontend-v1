@@ -6,6 +6,14 @@ import lab from "@/assets/images/lab.jpg";
 import farmer from "@/assets/images/farmer.jpg";
 import products from "@/assets/images/products.jpg";
 import leaves from "@/assets/images/leaves.jpg";
+import chilliImg from "@/assets/images/crops/chilli.png";
+import paddyImg from "@/assets/images/crops/paddy.png";
+import cottonImg from "@/assets/images/crops/cotton.png";
+import mangoImg from "@/assets/images/crops/mango.png";
+import tomatoImg from "@/assets/images/crops/tomato.png";
+import citrusImg from "@/assets/images/crops/citrus.png";
+import watermelonImg from "@/assets/images/crops/watermelon.png";
+import cashewImg from "@/assets/images/crops/cashew.png";
 import { Counter } from "@/components/common/Counter";
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
@@ -45,14 +53,14 @@ function HomePage() {
   ];
 
   const crops = [
-    { name: t("crops.cropsGrid.chilli"), emoji: "🌶️" },
-    { name: t("crops.cropsGrid.paddy"), emoji: "🌾" },
-    { name: t("crops.cropsGrid.cotton"), emoji: "🌿" },
-    { name: t("crops.cropsGrid.mango"), emoji: "🥭" },
-    { name: t("crops.cropsGrid.tomato"), emoji: "🍅" },
-    { name: t("crops.cropsGrid.citrus"), emoji: "🍊" },
-    { name: t("crops.cropsGrid.watermelon"), emoji: "🍉" },
-    { name: t("crops.cropsGrid.cashew"), emoji: "🌰" },
+    { name: t("crops.cropsGrid.chilli"),     note: t("crops.cropsGrid.chilliNote"),     img: chilliImg },
+    { name: t("crops.cropsGrid.paddy"),       note: t("crops.cropsGrid.paddyNote"),       img: paddyImg },
+    { name: t("crops.cropsGrid.cotton"),      note: t("crops.cropsGrid.cottonNote"),      img: cottonImg },
+    { name: t("crops.cropsGrid.mango"),       note: t("crops.cropsGrid.mangoNote"),       img: mangoImg },
+    { name: t("crops.cropsGrid.tomato"),      note: t("crops.cropsGrid.tomatoNote"),      img: tomatoImg },
+    { name: t("crops.cropsGrid.citrus"),      note: t("crops.cropsGrid.citrusNote"),      img: citrusImg },
+    { name: t("crops.cropsGrid.watermelon"), note: t("crops.cropsGrid.watermelonNote"), img: watermelonImg },
+    { name: t("crops.cropsGrid.cashew"),      note: t("crops.cropsGrid.cashewNote"),      img: cashewImg },
   ];
 
   const stories = [
@@ -640,29 +648,46 @@ function HomePage() {
             </Link>
           </div>
 
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
             {crops.map((c, i) => (
               <motion.div
                 key={c.name}
-                initial={{ opacity: 0, scale: 0.9 }}
-                whileInView={{ opacity: 1, scale: 1 }}
+                initial={{ opacity: 0, y: 24 }}
+                whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
-                transition={{ delay: i * 0.05 }}
+                transition={{ delay: i * 0.06, duration: 0.5, ease: "easeOut" }}
+                className="group relative aspect-[3/4] rounded-2xl overflow-hidden cursor-pointer"
               >
-                <Link
-                  to="/crops"
-                  className="group block aspect-square rounded-3xl bg-gradient-to-br from-secondary to-card border border-border p-6 hover:border-leaf hover:shadow-glow transition-all hover:-translate-y-1 relative overflow-hidden cursor-pointer"
-                >
-                  <div className="absolute inset-0 bg-lime-gradient opacity-0 group-hover:opacity-10 transition" />
-                  <div className="relative h-full flex flex-col justify-between">
-                    <div className="text-6xl">{c.emoji}</div>
-                    <div>
-                      <div className="text-xl font-bold">{c.name}</div>
-                      <div className="text-xs text-muted-foreground mt-1 flex items-center gap-1 group-hover:text-primary transition">
-                        Explore <ArrowRight className="size-3" />
-                      </div>
+                <Link to="/crops" className="absolute inset-0">
+                  {/* Background Photo */}
+                  <img
+                    src={c.img}
+                    alt={c.name}
+                    loading="lazy"
+                    className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-105"
+                  />
+
+                  {/* Gradient overlay */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/15 transition-colors duration-300" />
+
+                  {/* Bottom text */}
+                  <div className="absolute bottom-0 left-0 right-0 p-4 md:p-5">
+                    <p className="text-white/60 text-[10px] font-semibold tracking-[0.18em] uppercase mb-1.5">
+                      {c.note}
+                    </p>
+                    <div className="flex items-end justify-between gap-2">
+                      <h3 className="text-white text-xl md:text-2xl font-bold leading-tight">
+                        {c.name}
+                      </h3>
+                      <span className="flex items-center gap-1 text-white/80 text-xs font-medium shrink-0 mb-0.5 opacity-0 translate-y-2 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-300">
+                        View Programme <ArrowRight className="size-3" />
+                      </span>
                     </div>
                   </div>
+
+                  {/* Border ring */}
+                  <div className="absolute inset-0 rounded-2xl ring-1 ring-white/10 group-hover:ring-white/20 transition-all duration-300 pointer-events-none" />
                 </Link>
               </motion.div>
             ))}
