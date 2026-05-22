@@ -87,7 +87,7 @@ function Crops() {
 
       <section className="py-16 bg-background">
         <div className="max-w-7xl mx-auto px-6">
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
             {cropCards.map((crop, i) => (
               <Link
                 key={crop.slug}
@@ -119,19 +119,19 @@ function Crops() {
                   {/* Bottom text content */}
                   <div className="absolute bottom-0 left-0 right-0 p-5">
                     {/* Category eyebrow */}
-                    <p className="text-white/60 text-[10px] font-semibold tracking-[0.18em] uppercase mb-1.5">
+                    <p className="text-white/60 text-xs md:text-[10px] font-semibold tracking-[0.18em] uppercase mb-2 md:mb-1.5">
                       {crop.note}
                     </p>
 
                     {/* Crop name + hover CTA */}
                     <div className="flex flex-col w-full">
-                      <h3 className="text-white text-2xl md:text-3xl font-bold leading-tight">
+                      <h3 className="text-white text-4xl md:text-3xl font-bold leading-tight">
                         {crop.name}
                       </h3>
 
-                      {/* View Programme — hidden by default, slides in on hover under the name, aligned right */}
+                      {/* View Programme — always visible on mobile, slides in on hover on desktop */}
                       <span
-                        className="flex items-center gap-1 text-white/80 text-xs font-medium hover:text-white transition-all duration-300 opacity-0 max-h-0 translate-y-1 overflow-hidden self-end group-hover:opacity-100 group-hover:max-h-6 group-hover:translate-y-0 group-hover:mt-1.5"
+                        className="flex items-center gap-1 text-white/80 text-sm md:text-xs font-medium hover:text-white transition-all duration-300 opacity-100 max-h-6 translate-y-0 mt-2 md:opacity-0 md:max-h-0 md:translate-y-1 md:mt-0 overflow-hidden self-end group-hover:opacity-100 group-hover:max-h-6 group-hover:translate-y-0 group-hover:mt-1.5"
                       >
                         View Programme
                         <ArrowUpRight className="size-3.5" />

@@ -682,7 +682,7 @@ function HomePage() {
             </Link>
           </div>
 
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
             {crops.map((c, i) => (
               <motion.div
                 key={c.slug}
@@ -706,16 +706,16 @@ function HomePage() {
                   <div className="absolute inset-0 bg-black/0 group-hover:bg-black/15 transition-colors duration-300" />
 
                   {/* Bottom text */}
-                  <div className="absolute bottom-0 left-0 right-0 p-4 md:p-5">
-                    <p className="text-white/60 text-[10px] font-semibold tracking-[0.18em] uppercase mb-1.5">
+                  <div className="absolute bottom-0 left-0 right-0 p-6 md:p-5">
+                    <p className="text-white/60 text-xs md:text-[10px] font-semibold tracking-[0.18em] uppercase mb-2 md:mb-1.5">
                       {c.note}
                     </p>
                     <div className="flex flex-col w-full">
-                      <h3 className="text-white text-xl md:text-2xl font-bold leading-tight">
+                      <h3 className="text-white text-4xl md:text-2xl font-bold leading-tight">
                         {c.name}
                       </h3>
-                      {/* View Programme — hidden by default, slides in on hover under the name, aligned right */}
-                      <span className="flex items-center gap-1 text-white/80 text-xs font-medium hover:text-white transition-all duration-300 opacity-0 max-h-0 translate-y-1 overflow-hidden self-end group-hover:opacity-100 group-hover:max-h-6 group-hover:translate-y-0 group-hover:mt-1.5">
+                      {/* View Programme — always visible on mobile, slides in on hover on desktop */}
+                      <span className="flex items-center gap-1 text-white/80 text-sm md:text-xs font-medium hover:text-white transition-all duration-300 opacity-100 max-h-6 translate-y-0 mt-2 md:opacity-0 md:max-h-0 md:translate-y-1 md:mt-0 overflow-hidden self-end group-hover:opacity-100 group-hover:max-h-6 group-hover:translate-y-0 group-hover:mt-1.5">
                         View Programme <ArrowRight className="size-3.5" />
                       </span>
                     </div>
