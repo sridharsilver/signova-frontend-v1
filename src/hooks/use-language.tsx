@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 import { translations } from "@/lib/translations";
 import { supabase } from "@/lib/supabase";
+import { withTimeout } from "@/lib/utils";
 
 export type LanguageKey = "en" | "hi" | "te" | "gu" | "mr" | "ta" | "kn";
 
@@ -82,7 +83,9 @@ function getInitialShowSelector(): boolean {
 
 export function LanguageProvider({ children }: { children: ReactNode }) {
   const [language, setLanguageState] = useState<LanguageKey>(getInitialLanguage);
-  const [enabledLanguages, setEnabledLanguages] = useState<LanguageKey[]>(getInitialEnabledLanguages);
+  const [enabledLanguages, setEnabledLanguages] = useState<LanguageKey[]>(
+    getInitialEnabledLanguages,
+  );
   const [showLanguageSelector, setShowLanguageSelector] = useState<boolean>(getInitialShowSelector);
 
   useEffect(() => {
@@ -96,11 +99,9 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     async function fetchLanguagesConfig() {
       try {
-        const { data, error } = await supabase
-          .from("frontend_settings")
-          .select("*")
-          .eq("key", "languages")
-          .single();
+        const { data, error } = await withTimeout(
+          supabase.from("frontend_settings").select("*").eq("key", "languages").single(),
+        );
 
         if (!error && data && data.value) {
           const config = data.value;
@@ -125,7 +126,10 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
             currentCache.languages = config;
             localStorage.setItem("signova_frontend_settings", JSON.stringify(currentCache));
           } catch {
-            localStorage.setItem("signova_frontend_settings", JSON.stringify({ languages: config }));
+            localStorage.setItem(
+              "signova_frontend_settings",
+              JSON.stringify({ languages: config }),
+            );
           }
         }
       } catch (err) {
@@ -160,7 +164,7 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
       const parts = key.split(".");
       const langDict = translations[language] || translations.en;
       let val = parts.reduce((acc, part) => acc && acc[part], langDict as any);
-      
+
       if (val === undefined || val === null) {
         const engDict = translations.en;
         val = parts.reduce((acc, part) => acc && acc[part], engDict as any);
@@ -177,7 +181,9 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <LanguageContext.Provider value={{ language, setLanguage, t, enabledLanguages, showLanguageSelector }}>
+    <LanguageContext.Provider
+      value={{ language, setLanguage, t, enabledLanguages, showLanguageSelector }}
+    >
       {children}
     </LanguageContext.Provider>
   );

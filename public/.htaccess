@@ -1,3 +1,7 @@
+<IfModule mod_headers.c>
+  Header set Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline'; connect-src 'self' https://tdemraprfvdlbagemwfs.supabase.co wss://tdemraprfvdlbagemwfs.supabase.co https://generativelanguage.googleapis.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev https://images.unsplash.com; media-src 'self' https://assets.mixkit.co; frame-src 'self';"
+</IfModule>
+
 <IfModule mod_rewrite.c>
   RewriteEngine On
   RewriteBase /

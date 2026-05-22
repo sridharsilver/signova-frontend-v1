@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
+import { withTimeout } from "@/lib/utils";
 import { MessageCircle } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -12,11 +13,9 @@ export function WhatsAppFab() {
     async function fetchPhoneAndSettings() {
       try {
         // 1. Fetch contact details for WhatsApp phone number
-        const { data: contactData, error: contactError } = await supabase
-          .from("frontend_settings")
-          .select("*")
-          .eq("key", "contact")
-          .single();
+        const { data: contactData, error: contactError } = await withTimeout(
+          supabase.from("frontend_settings").select("*").eq("key", "contact").single(),
+        );
 
         if (contactError) {
           const local = localStorage.getItem("signova_frontend_settings");
@@ -31,11 +30,9 @@ export function WhatsAppFab() {
         }
 
         // 2. Fetch theme details for WhatsApp show/hide setting
-        const { data: themeData, error: themeError } = await supabase
-          .from("frontend_settings")
-          .select("*")
-          .eq("key", "theme")
-          .single();
+        const { data: themeData, error: themeError } = await withTimeout(
+          supabase.from("frontend_settings").select("*").eq("key", "theme").single(),
+        );
 
         if (themeError) {
           const local = localStorage.getItem("signova_frontend_settings");

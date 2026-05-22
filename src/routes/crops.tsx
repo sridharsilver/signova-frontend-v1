@@ -14,6 +14,7 @@ import watermelonImg from "@/assets/images/crops/watermelon.png";
 import cashewImg from "@/assets/images/crops/cashew.png";
 
 import { supabase } from "@/lib/supabase";
+import { withTimeout } from "@/lib/utils";
 import { CROPS } from "@/data/crops";
 
 const LOCAL_CROP_IMAGES: Record<string, string> = {
@@ -30,10 +31,9 @@ const LOCAL_CROP_IMAGES: Record<string, string> = {
 export const Route = createFileRoute("/crops")({
   loader: async () => {
     try {
-      const { data, error } = await supabase
-        .from("crops")
-        .select("*")
-        .order("slug", { ascending: true });
+      const { data, error } = await withTimeout(
+        supabase.from("crops").select("*").order("slug", { ascending: true }),
+      );
       if (error || !data || data.length === 0) {
         return { crops: null };
       }
@@ -46,7 +46,11 @@ export const Route = createFileRoute("/crops")({
   head: () => ({
     meta: [
       { title: "Crop Solutions — Signova Group" },
-      { name: "description", content: "Crop-specific nutrition programmes for chilli, paddy, cotton, mango, tomato, citrus, watermelon and cashew." },
+      {
+        name: "description",
+        content:
+          "Crop-specific nutrition programmes for chilli, paddy, cotton, mango, tomato, citrus, watermelon and cashew.",
+      },
       { property: "og:title", content: "Signova Crop Solutions" },
       { property: "og:description", content: "Tailored science for every crop you grow." },
     ],
@@ -60,19 +64,22 @@ function Crops() {
 
   const cropsList = dbCrops || CROPS;
 
-  const cropCards = cropsList.map((crop) => {
+  const cropCards = cropsList.map((crop: any) => {
     const slug = crop.slug;
-    const name = typeof crop.name === "object" && crop.name
-      ? (crop.name[language] || crop.name["en"] || "")
-      : t(`crops.cropsGrid.${crop.slug}` as any, crop.name);
+    const name =
+      typeof crop.name === "object" && crop.name
+        ? crop.name[language] || crop.name["en"] || ""
+        : t(`crops.cropsGrid.${crop.slug}` as any, crop.name);
 
-    const note = typeof crop.note === "object" && crop.note
-      ? (crop.note[language] || crop.note["en"] || "")
-      : t(`crops.cropsGrid.${crop.slug}Note` as any, crop.note);
+    const note =
+      typeof crop.note === "object" && crop.note
+        ? crop.note[language] || crop.note["en"] || ""
+        : t(`crops.cropsGrid.${crop.slug}Note` as any, crop.note);
 
-    const img = ("image_url" in crop && crop.image_url)
-      ? crop.image_url
-      : (LOCAL_CROP_IMAGES[slug.toLowerCase()] || ("img" in crop ? crop.img : "") || paddyImg);
+    const img =
+      "image_url" in crop && crop.image_url
+        ? crop.image_url
+        : LOCAL_CROP_IMAGES[slug.toLowerCase()] || ("img" in crop ? crop.img : "") || paddyImg;
 
     return { slug, name, note, img };
   });
@@ -88,7 +95,7 @@ function Crops() {
       <section className="py-16 bg-background">
         <div className="max-w-7xl mx-auto px-6">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
-            {cropCards.map((crop, i) => (
+            {cropCards.map((crop: any, i: number) => (
               <Link
                 key={crop.slug}
                 to="/crops/$slug/nutrients"
@@ -130,9 +137,7 @@ function Crops() {
                       </h3>
 
                       {/* View Programme — always visible on mobile, slides in on hover on desktop */}
-                      <span
-                        className="flex items-center gap-1 text-white/80 text-sm md:text-xs font-medium hover:text-white transition-all duration-300 opacity-100 max-h-6 translate-y-0 mt-2 md:opacity-0 md:max-h-0 md:translate-y-1 md:mt-0 overflow-hidden self-end group-hover:opacity-100 group-hover:max-h-6 group-hover:translate-y-0 group-hover:mt-1.5"
-                      >
+                      <span className="flex items-center gap-1 text-white/80 text-sm md:text-xs font-medium hover:text-white transition-all duration-300 opacity-100 max-h-6 translate-y-0 mt-2 md:opacity-0 md:max-h-0 md:translate-y-1 md:mt-0 overflow-hidden self-end group-hover:opacity-100 group-hover:max-h-6 group-hover:translate-y-0 group-hover:mt-1.5">
                         View Programme
                         <ArrowUpRight className="size-3.5" />
                       </span>

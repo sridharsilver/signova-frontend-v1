@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 import { supabase } from "@/lib/supabase";
+import { withTimeout } from "@/lib/utils";
 
 type Theme = "light" | "dark";
 
@@ -100,7 +101,10 @@ function applyDynamicTheme(config: any) {
 
   root.style.setProperty("--primary", primary);
   root.style.setProperty("--leaf", primary);
-  root.style.setProperty("--lime", secondary && secondary !== "#0c0a09" ? secondary : lightenedPrimary);
+  root.style.setProperty(
+    "--lime",
+    secondary && secondary !== "#0c0a09" ? secondary : lightenedPrimary,
+  );
 
   // Set readable foreground color for primary background dynamically
   const isLight = isColorLight(primary);
@@ -113,12 +117,12 @@ function applyDynamicTheme(config: any) {
   // 2. Dynamic Gradients
   root.style.setProperty(
     "--gradient-lime",
-    `linear-gradient(135deg, ${primary}, ${secondary && secondary !== "#0c0a09" ? secondary : lightenedPrimary})`
+    `linear-gradient(135deg, ${primary}, ${secondary && secondary !== "#0c0a09" ? secondary : lightenedPrimary})`,
   );
 
   root.style.setProperty(
     "--gradient-hero",
-    `linear-gradient(135deg, ${primary} 0%, #171717 60%, #0a0a0a 100%)`
+    `linear-gradient(135deg, ${primary} 0%, #171717 60%, #0a0a0a 100%)`,
   );
 
   // 3. Dynamic Shadows using brand color with hex opacity
@@ -174,11 +178,9 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     // 2. Fetch fresh theme settings from Supabase
     async function fetchDatabaseTheme() {
       try {
-        const { data, error } = await supabase
-          .from("frontend_settings")
-          .select("*")
-          .eq("key", "theme")
-          .single();
+        const { data, error } = await withTimeout(
+          supabase.from("frontend_settings").select("*").eq("key", "theme").single(),
+        );
 
         if (!error && data && data.value) {
           applyDynamicTheme(data.value);
@@ -193,7 +195,10 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
             currentCache.theme = data.value;
             localStorage.setItem("signova_frontend_settings", JSON.stringify(currentCache));
           } catch {
-            localStorage.setItem("signova_frontend_settings", JSON.stringify({ theme: data.value }));
+            localStorage.setItem(
+              "signova_frontend_settings",
+              JSON.stringify({ theme: data.value }),
+            );
           }
         }
       } catch (err) {

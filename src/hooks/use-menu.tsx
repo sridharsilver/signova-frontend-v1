@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
+import { withTimeout } from "@/lib/utils";
 
 /* ─────────────────────────────────────────────────────────
    Types — mirror backend MenuManagement.tsx exactly
@@ -15,7 +16,7 @@ export type MenuSubLink = {
 export type MenuGroup = {
   id: string;
   label: string;
-  to?: string;          // set → direct link (no dropdown)
+  to?: string; // set → direct link (no dropdown)
   visible: boolean;
   children?: MenuSubLink[];
 };
@@ -42,10 +43,34 @@ export const DEFAULT_MENU: MenuSettings = {
       label: "Company",
       visible: true,
       children: [
-        { id: "about",      to: "/about",      label: "About Us",          desc: "Our story, mission & vision",     visible: true },
-        { id: "infrastructure", to: "/infrastructure", label: "Infrastructure", desc: "State-of-the-art facilities", visible: true },
-        { id: "innovation", to: "/innovation", label: "R&D and Innovation", desc: "Science behind Signova",         visible: true },
-        { id: "careers",    to: "/careers",    label: "Careers",           desc: "Join our growing team",           visible: true },
+        {
+          id: "about",
+          to: "/about",
+          label: "About Us",
+          desc: "Our story, mission & vision",
+          visible: true,
+        },
+        {
+          id: "infrastructure",
+          to: "/infrastructure",
+          label: "Infrastructure",
+          desc: "State-of-the-art facilities",
+          visible: true,
+        },
+        {
+          id: "innovation",
+          to: "/innovation",
+          label: "R&D and Innovation",
+          desc: "Science behind Signova",
+          visible: true,
+        },
+        {
+          id: "careers",
+          to: "/careers",
+          label: "Careers",
+          desc: "Join our growing team",
+          visible: true,
+        },
       ],
     },
     {
@@ -53,10 +78,34 @@ export const DEFAULT_MENU: MenuSettings = {
       label: "Solutions",
       visible: true,
       children: [
-        { id: "products",  to: "/products",  label: "Products",         desc: "Micronutrients, bio & nano-tech", visible: true },
-        { id: "crops",     to: "/crops",     label: "Crop Programs",    desc: "Tailored crop nutrition",         visible: true },
-        { id: "knowledge", to: "/knowledge", label: "Knowledge Centre", desc: "Guides, blogs & research",        visible: true },
-        { id: "ai-chat",   to: "/ai-chat",   label: "AI Crop Advisor",  desc: "Multilingual expert crop help",   visible: true },
+        {
+          id: "products",
+          to: "/products",
+          label: "Products",
+          desc: "Micronutrients, bio & nano-tech",
+          visible: true,
+        },
+        {
+          id: "crops",
+          to: "/crops",
+          label: "Crop Programs",
+          desc: "Tailored crop nutrition",
+          visible: true,
+        },
+        {
+          id: "knowledge",
+          to: "/knowledge",
+          label: "Knowledge Centre",
+          desc: "Guides, blogs & research",
+          visible: true,
+        },
+        {
+          id: "ai-chat",
+          to: "/ai-chat",
+          label: "AI Crop Advisor",
+          desc: "Multilingual expert crop help",
+          visible: true,
+        },
       ],
     },
     {
@@ -64,8 +113,20 @@ export const DEFAULT_MENU: MenuSettings = {
       label: "Partner",
       visible: true,
       children: [
-        { id: "distributor", to: "/distributor", label: "Become Distributor", desc: "Grow with Signova", visible: true },
-        { id: "contact",     to: "/contact",     label: "Contact Us",         desc: "Talk to our team",  visible: true },
+        {
+          id: "distributor",
+          to: "/distributor",
+          label: "Become Distributor",
+          desc: "Grow with Signova",
+          visible: true,
+        },
+        {
+          id: "contact",
+          to: "/contact",
+          label: "Contact Us",
+          desc: "Talk to our team",
+          visible: true,
+        },
       ],
     },
   ],
@@ -96,11 +157,9 @@ export function useMenu() {
   useEffect(() => {
     async function fetchMenu() {
       try {
-        const { data, error } = await supabase
-          .from("frontend_settings")
-          .select("*")
-          .eq("key", "menu")
-          .single();
+        const { data, error } = await withTimeout(
+          supabase.from("frontend_settings").select("*").eq("key", "menu").single(),
+        );
 
         if (!error && data?.value?.groups) {
           const fetched = data.value as MenuSettings;

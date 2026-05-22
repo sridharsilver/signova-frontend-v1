@@ -2,6 +2,7 @@ import { useChatModal } from "@/lib/chat-modal";
 import { Sparkles, X } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import { supabase } from "@/lib/supabase";
+import { withTimeout } from "@/lib/utils";
 import { motion, AnimatePresence, useMotionValue, animate } from "framer-motion";
 
 export function AiChatFab() {
@@ -12,11 +13,9 @@ export function AiChatFab() {
   useEffect(() => {
     async function fetchSettings() {
       try {
-        const { data, error } = await supabase
-          .from("frontend_settings")
-          .select("*")
-          .eq("key", "theme")
-          .single();
+        const { data, error } = await withTimeout(
+          supabase.from("frontend_settings").select("*").eq("key", "theme").single(),
+        );
 
         if (error) {
           const local = localStorage.getItem("signova_frontend_settings");
@@ -62,7 +61,7 @@ export function AiChatFab() {
         left: -window.innerWidth + 80,
         right: 10,
         top: -window.innerHeight + 80,
-        bottom: 10
+        bottom: 10,
       });
     };
     checkConstraints();
@@ -124,10 +123,10 @@ export function AiChatFab() {
       className="fixed bottom-6 right-6 z-[99] flex items-center gap-3 touch-none select-none cursor-grab active:cursor-grabbing"
     >
       {/* Dynamic Hint Tooltip */}
-      <div 
+      <div
         className={`bg-charcoal text-white text-xs font-semibold py-2 px-3.5 rounded-2xl glass-dark border border-white/10 shadow-lg pointer-events-none transition-all duration-500 whitespace-nowrap ${
           showTooltip && !isOpen
-            ? "opacity-100 translate-x-0 scale-100" 
+            ? "opacity-100 translate-x-0 scale-100"
             : "opacity-0 translate-x-4 scale-95"
         }`}
       >
@@ -140,10 +139,10 @@ export function AiChatFab() {
       <div className="relative">
         {/* Pulsing Backlight Ring when closed */}
         {!isOpen && (
-          <motion.div 
-            animate={{ scale: [1, 1.35, 1], opacity: [0.5, 0, 0.5] }} 
-            transition={{ duration: 2.2, repeat: Infinity, ease: "easeInOut" }} 
-            className="absolute -inset-1.5 rounded-full bg-lime/25 z-[-1] pointer-events-none blur-[1px]" 
+          <motion.div
+            animate={{ scale: [1, 1.35, 1], opacity: [0.5, 0, 0.5] }}
+            transition={{ duration: 2.2, repeat: Infinity, ease: "easeInOut" }}
+            className="absolute -inset-1.5 rounded-full bg-lime/25 z-[-1] pointer-events-none blur-[1px]"
           />
         )}
 
@@ -162,8 +161,8 @@ export function AiChatFab() {
           whileHover={{ scale: 1.08 }}
           whileTap={{ scale: 0.95 }}
           className={`size-14 rounded-full text-white grid place-items-center shadow-glow border border-lime/30 transition-all cursor-pointer ${
-            isOpen 
-              ? "bg-white/15 dark:bg-black/35 backdrop-blur-md border-white/15 text-foreground hover:bg-white/20 hover:dark:bg-black/45" 
+            isOpen
+              ? "bg-white/15 dark:bg-black/35 backdrop-blur-md border-white/15 text-foreground hover:bg-white/20 hover:dark:bg-black/45"
               : "bg-hero"
           }`}
           aria-label="AI Crop Advisor"
