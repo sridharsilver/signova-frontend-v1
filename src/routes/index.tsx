@@ -19,6 +19,18 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
 import { useLanguage } from "@/hooks/use-language";
 import { getLocalizedArticles } from "./knowledge.$slug";
+import { CROPS } from "@/data/crops";
+
+const LOCAL_CROP_IMAGES: Record<string, string> = {
+  chilli: chilliImg,
+  paddy: paddyImg,
+  cotton: cottonImg,
+  mango: mangoImg,
+  tomato: tomatoImg,
+  citrus: citrusImg,
+  watermelon: watermelonImg,
+  cashew: cashewImg,
+};
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -35,6 +47,24 @@ export const Route = createFileRoute("/")({
 
 function HomePage() {
   const { t, language } = useLanguage();
+  const [dbCrops, setDbCrops] = useState<any[] | null>(null);
+
+  useEffect(() => {
+    async function fetchCrops() {
+      try {
+        const { data, error } = await supabase
+          .from("crops")
+          .select("*")
+          .order("slug", { ascending: true });
+        if (!error && data && data.length > 0) {
+          setDbCrops(data);
+        }
+      } catch (err) {
+        console.warn("Failed to fetch crops for homepage:", err);
+      }
+    }
+    fetchCrops();
+  }, []);
 
   const stats = [
     { n: 100000, s: "+", l: t("home.stats.farmers") },
@@ -52,16 +82,20 @@ function HomePage() {
     { icon: FlaskConical, title: t("home.categories.specialty.title"), desc: t("home.categories.specialty.desc"), grad: "from-charcoal to-deep" },
   ];
 
-  const crops = [
-    { name: t("crops.cropsGrid.chilli"),     note: t("crops.cropsGrid.chilliNote"),     img: chilliImg },
-    { name: t("crops.cropsGrid.paddy"),       note: t("crops.cropsGrid.paddyNote"),       img: paddyImg },
-    { name: t("crops.cropsGrid.cotton"),      note: t("crops.cropsGrid.cottonNote"),      img: cottonImg },
-    { name: t("crops.cropsGrid.mango"),       note: t("crops.cropsGrid.mangoNote"),       img: mangoImg },
-    { name: t("crops.cropsGrid.tomato"),      note: t("crops.cropsGrid.tomatoNote"),      img: tomatoImg },
-    { name: t("crops.cropsGrid.citrus"),      note: t("crops.cropsGrid.citrusNote"),      img: citrusImg },
-    { name: t("crops.cropsGrid.watermelon"), note: t("crops.cropsGrid.watermelonNote"), img: watermelonImg },
-    { name: t("crops.cropsGrid.cashew"),      note: t("crops.cropsGrid.cashewNote"),      img: cashewImg },
-  ];
+  const cropsList = dbCrops || CROPS;
+  const crops = cropsList.map((crop) => {
+    const slug = crop.slug;
+    const name = typeof crop.name === "object" && crop.name
+      ? (crop.name[language] || crop.name["en"] || "")
+      : t(`crops.cropsGrid.${crop.slug}` as any, crop.name);
+    const note = typeof crop.note === "object" && crop.note
+      ? (crop.note[language] || crop.note["en"] || "")
+      : t(`crops.cropsGrid.${crop.slug}Note` as any, crop.note);
+    const img = ("image_url" in crop && crop.image_url)
+      ? crop.image_url
+      : (LOCAL_CROP_IMAGES[slug.toLowerCase()] || ("img" in crop ? crop.img : "") || paddyImg);
+    return { slug, name, note, img };
+  });
 
   const stories = [
     { name: "Ramesh Patel", crop: t("home.testimonials.cottonGuj"), quote: t("home.testimonials.rameshQuote"), img: farmer },
@@ -651,14 +685,14 @@ function HomePage() {
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
             {crops.map((c, i) => (
               <motion.div
-                key={c.name}
+                key={c.slug}
                 initial={{ opacity: 0, y: 24 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: i * 0.06, duration: 0.5, ease: "easeOut" }}
                 className="group relative aspect-[3/4] rounded-2xl overflow-hidden cursor-pointer"
               >
-                <Link to="/crops" className="absolute inset-0">
+                <Link to="/crops/$slug/nutrients" params={{ slug: c.slug }} className="absolute inset-0">
                   {/* Background Photo */}
                   <img
                     src={c.img}
@@ -676,12 +710,13 @@ function HomePage() {
                     <p className="text-white/60 text-[10px] font-semibold tracking-[0.18em] uppercase mb-1.5">
                       {c.note}
                     </p>
-                    <div className="flex items-end justify-between gap-2">
+                    <div className="flex flex-col w-full">
                       <h3 className="text-white text-xl md:text-2xl font-bold leading-tight">
                         {c.name}
                       </h3>
-                      <span className="flex items-center gap-1 text-white/80 text-xs font-medium shrink-0 mb-0.5 opacity-0 translate-y-2 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-300">
-                        View Programme <ArrowRight className="size-3" />
+                      {/* View Programme — hidden by default, slides in on hover under the name, aligned right */}
+                      <span className="flex items-center gap-1 text-white/80 text-xs font-medium hover:text-white transition-all duration-300 opacity-0 max-h-0 translate-y-1 overflow-hidden self-end group-hover:opacity-100 group-hover:max-h-6 group-hover:translate-y-0 group-hover:mt-1.5">
+                        View Programme <ArrowRight className="size-3.5" />
                       </span>
                     </div>
                   </div>

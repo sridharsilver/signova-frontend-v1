@@ -11,7 +11,29 @@ import {
   ShieldCheck,
 } from "lucide-react";
 import { PageHero } from "@/components/layout/PageShell";
-import { getCropBySlug, getDeficienciesForCrop, type Deficiency } from "@/data/crops";
+import { getCropBySlug, getDeficienciesForCrop } from "@/data/crops";
+import { useLanguage } from "@/hooks/use-language";
+import { supabase } from "@/lib/supabase";
+
+import chilliImg from "@/assets/images/crops/chilli.png";
+import paddyImg from "@/assets/images/crops/paddy.png";
+import cottonImg from "@/assets/images/crops/cotton.png";
+import mangoImg from "@/assets/images/crops/mango.png";
+import tomatoImg from "@/assets/images/crops/tomato.png";
+import citrusImg from "@/assets/images/crops/citrus.png";
+import watermelonImg from "@/assets/images/crops/watermelon.png";
+import cashewImg from "@/assets/images/crops/cashew.png";
+
+const LOCAL_CROP_IMAGES: Record<string, string> = {
+  chilli: chilliImg,
+  paddy: paddyImg,
+  cotton: cottonImg,
+  mango: mangoImg,
+  tomato: tomatoImg,
+  citrus: citrusImg,
+  watermelon: watermelonImg,
+  cashew: cashewImg,
+};
 
 type Accent = {
   symbol: string;
@@ -27,15 +49,92 @@ const ACCENTS: Accent[] = [
   { symbol: "B",  ring: "ring-rose-500/30",    chip: "bg-rose-500/10 text-rose-600 dark:text-rose-400",       glow: "from-rose-500/20 via-rose-500/5 to-transparent" },
 ];
 
+function getAccent(symbol: string, index: number): Accent {
+  const normalized = symbol.trim().toLowerCase();
+  const match = ACCENTS.find(a => a.symbol.toLowerCase() === normalized);
+  if (match) return match;
+  
+  if (normalized === "n" || normalized === "nitrogen") {
+    return { symbol, ring: "ring-blue-500/30", chip: "bg-blue-500/10 text-blue-600 dark:text-blue-400", glow: "from-blue-500/20 via-blue-500/5 to-transparent" };
+  }
+  if (normalized === "p" || normalized === "phosphorus") {
+    return { symbol, ring: "ring-purple-500/30", chip: "bg-purple-500/10 text-purple-600 dark:text-purple-400", glow: "from-purple-500/20 via-purple-500/5 to-transparent" };
+  }
+  if (normalized === "k" || normalized === "potassium") {
+    return { symbol, ring: "ring-orange-500/30", chip: "bg-orange-500/10 text-orange-600 dark:text-orange-400", glow: "from-orange-500/20 via-orange-500/5 to-transparent" };
+  }
+  if (normalized === "ca" || normalized === "calcium") {
+    return { symbol, ring: "ring-teal-500/30", chip: "bg-teal-500/10 text-teal-600 dark:text-teal-400", glow: "from-teal-500/20 via-teal-500/5 to-transparent" };
+  }
+  if (normalized === "fe" || normalized === "iron") {
+    return { symbol, ring: "ring-amber-700/30", chip: "bg-amber-700/10 text-amber-700 dark:text-amber-500", glow: "from-amber-700/20 via-amber-700/5 to-transparent" };
+  }
+  if (normalized === "mn" || normalized === "manganese") {
+    return { symbol, ring: "ring-fuchsia-500/30", chip: "bg-fuchsia-500/10 text-fuchsia-600 dark:text-fuchsia-400", glow: "from-fuchsia-500/20 via-fuchsia-500/5 to-transparent" };
+  }
+  
+  const fallback = ACCENTS[index % ACCENTS.length];
+  return { ...fallback, symbol };
+}
+
 export const Route = createFileRoute("/crops_/$slug/nutrients")({
-  loader: ({ params }) => {
-    const crop = getCropBySlug(params.slug);
-    if (!crop) throw notFound();
-    const deficiencies = getDeficienciesForCrop(params.slug);
-    return { crop, deficiencies };
+  loader: async ({ params }) => {
+    try {
+      const { data: cropData, error: cropError } = await supabase
+        .from("crops")
+        .select("*")
+        .eq("slug", params.slug)
+        .maybeSingle();
+
+      if (cropError) throw cropError;
+
+      if (cropData) {
+        const { data: defData, error: defError } = await supabase
+          .from("crop_deficiencies")
+          .select("*")
+          .eq("crop_id", cropData.id)
+          .order("sort_order", { ascending: true });
+
+        if (defError) throw defError;
+
+        return {
+          crop: cropData,
+          deficiencies: defData || [],
+        };
+      }
+    } catch (e) {
+      console.warn("Failed to fetch crop nutrients from Supabase, falling back to static data:", e);
+    }
+
+    const staticCrop = getCropBySlug(params.slug);
+    if (!staticCrop) throw notFound();
+    const staticDeficiencies = getDeficienciesForCrop(params.slug);
+    return {
+      crop: staticCrop,
+      deficiencies: staticDeficiencies,
+    };
   },
   head: ({ loaderData }) => {
-    const name = loaderData?.crop.name ?? "Crop";
+    let lang = "en";
+    if (typeof window !== "undefined") {
+      try {
+        const saved = localStorage.getItem("signova_chat_lang");
+        if (saved && ["en", "hi", "te", "gu", "mr", "ta", "kn"].includes(saved)) {
+          lang = saved;
+        }
+      } catch {}
+    }
+
+    const crop = loaderData?.crop;
+    let name = "Crop";
+    if (crop) {
+      if (typeof crop.name === "object" && crop.name) {
+        name = (crop.name as any)[lang] || (crop.name as any)["en"] || "Crop";
+      } else {
+        name = crop.name;
+      }
+    }
+
     const title = `${name} Nutrient Management — Signova Group`;
     const description = `Stage-wise nutrient deficiency guide for ${name}: symptoms, affects and recommended Signova solutions.`;
     return {
@@ -76,12 +175,63 @@ export const Route = createFileRoute("/crops_/$slug/nutrients")({
 
 function CropNutrients() {
   const { crop, deficiencies } = Route.useLoaderData();
+  const { t, language } = useLanguage();
+
+  const cropName = typeof crop.name === "object" && crop.name
+    ? ((crop.name as any)[language] || (crop.name as any)["en"] || "")
+    : t(`crops.cropsGrid.${crop.slug}` as any, crop.name);
+
+  const localizedDeficiencies = deficiencies.map((d: any, i: number) => {
+    const name = typeof d.name === "object" && d.name
+      ? (d.name[language] || d.name["en"] || "")
+      : d.name;
+    const symptoms = typeof d.symptoms === "object" && d.symptoms
+      ? (d.symptoms[language] || d.symptoms["en"] || "")
+      : d.symptoms;
+    const affect = typeof d.affect === "object" && d.affect
+      ? (d.affect[language] || d.affect["en"] || "")
+      : d.affect;
+    const product = typeof d.product === "object" && d.product
+      ? (d.product[language] || d.product["en"] || "")
+      : d.product;
+    const soilDrip = typeof d.soil_drip === "object" && d.soil_drip
+      ? (d.soil_drip[language] || d.soil_drip["en"] || "")
+      : (typeof d.soilDrip === "object" && d.soilDrip
+          ? (d.soilDrip[language] || d.soilDrip["en"] || "")
+          : (d.soil_drip || d.soilDrip || ""));
+    const benefit = typeof d.benefit === "object" && d.benefit
+      ? (d.benefit[language] || d.benefit["en"] || "")
+      : d.benefit;
+    
+    const cropImg = ("image_url" in crop && crop.image_url)
+      ? crop.image_url
+      : (LOCAL_CROP_IMAGES[crop.slug.toLowerCase()] || paddyImg);
+
+    const img = ("image_url" in d && d.image_url)
+      ? d.image_url
+      : (d.img || cropImg);
+
+    const symbol = d.nutrient_symbol || d.nutrientSymbol || "Mg";
+    const accent = getAccent(symbol, i);
+
+    return {
+      name,
+      symptoms,
+      affect,
+      product,
+      soilDrip,
+      benefit,
+      nutrientSymbol: symbol,
+      accent,
+      img,
+    };
+  });
 
   return (
     <>
       <PageHero
         eyebrow="Nutrient Management"
-        title={`${crop.name} Nutrient Management`}
+        title={`${cropName} Nutrient Management`}
         subtitle="Identify nutrient deficiencies in the field and apply the right Signova solution at the right stage."
       />
 
@@ -97,13 +247,13 @@ function CropNutrients() {
           <span className="text-xs uppercase tracking-[0.18em] text-muted-foreground hidden md:inline">
             Jump to ·
           </span>
-          {deficiencies.map((d: Deficiency, i: number) => (
+          {localizedDeficiencies.map((d, i: number) => (
             <a
               key={d.name}
               href={`#${slugify(d.name)}`}
-              className={`inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-xs font-semibold ring-1 ${ACCENTS[i].ring} ${ACCENTS[i].chip} hover:scale-[1.03] transition-transform`}
+              className={`inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-xs font-semibold ring-1 ${d.accent.ring} ${d.accent.chip} hover:scale-[1.03] transition-transform`}
             >
-              <span className="font-mono opacity-80">{ACCENTS[i].symbol}</span>
+              <span className="font-mono opacity-80">{d.accent.symbol}</span>
               {d.name.replace(" Deficiency", "")}
             </a>
           ))}
@@ -122,7 +272,7 @@ function CropNutrients() {
               <Sparkles className="size-3.5" /> Field Reference
             </div>
             <h2 className="text-3xl md:text-4xl font-bold tracking-tight">
-              Common deficiencies in <span className="text-primary">{crop.name.toLowerCase()}</span> &amp; how to fix them
+              Common deficiencies in <span className="text-primary">{cropName.toLowerCase()}</span> &amp; how to fix them
             </h2>
             <p className="mt-4 text-muted-foreground text-lg leading-relaxed">
               Spot symptoms early, understand the impact on yield and quality, and apply the matched Signova
@@ -131,8 +281,8 @@ function CropNutrients() {
           </div>
 
           <div className="space-y-16">
-            {deficiencies.map((d: Deficiency, i: number) => (
-              <DeficiencyCard key={d.name} d={d} index={i} accent={ACCENTS[i]} />
+            {localizedDeficiencies.map((d, i: number) => (
+              <DeficiencyCard key={d.name} d={d} index={i} totalCount={localizedDeficiencies.length} />
             ))}
           </div>
 
@@ -149,7 +299,7 @@ function CropNutrients() {
                 </h3>
                 <p className="mt-3 text-primary-foreground/80 max-w-xl">
                   Send a photo of your field to our agronomist — get a personalised spray schedule for your
-                  {" "}{crop.name.toLowerCase()} crop within 24 hours.
+                  {" "}{cropName.toLowerCase()} crop within 24 hours.
                 </p>
               </div>
               <div className="flex md:justify-end">
@@ -171,13 +321,14 @@ function CropNutrients() {
 function DeficiencyCard({
   d,
   index,
-  accent,
+  totalCount,
 }: {
-  d: Deficiency;
+  d: any;
   index: number;
-  accent: Accent;
+  totalCount: number;
 }) {
   const reverse = index % 2 === 1;
+  const accent = d.accent;
   return (
     <article
       id={slugify(d.name)}
@@ -213,7 +364,7 @@ function DeficiencyCard({
               {accent.symbol}
             </div>
             <div className="px-3 py-1.5 rounded-full bg-background/60 backdrop-blur border border-border text-xs font-semibold">
-              Deficiency 0{index + 1} / {String(4).padStart(2, "0")}
+              Deficiency 0{index + 1} / {String(totalCount).padStart(2, "0")}
             </div>
           </div>
         </div>
@@ -225,7 +376,7 @@ function DeficiencyCard({
           </h3>
           <div className="mt-2 h-1 w-14 rounded-full bg-gradient-to-r from-primary to-emerald-400" />
 
-          {/* Symptoms / Affect — warning column */}
+          {/* Symptoms / Affects — warning column */}
           <div className="mt-8 grid sm:grid-cols-2 gap-4">
             <InfoTile
               icon={<AlertTriangle className="size-4" />}

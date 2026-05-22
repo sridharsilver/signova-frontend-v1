@@ -205,3 +205,14 @@ html[lang="kn"] h1, html[lang="kn"] h2, html[lang="kn"] h3, html[lang="kn"] h4, 
   letter-spacing: normal !important;
 }
 
+/* Remove letter spacing / tracking on elements with tracking classes for Telugu and other complex scripts */
+html[lang="te"] [class*="tracking-"],
+html[lang="hi"] [class*="tracking-"],
+html[lang="gu"] [class*="tracking-"],
+html[lang="mr"] [class*="tracking-"],
+html[lang="ta"] [class*="tracking-"],
+html[lang="kn"] [class*="tracking-"] {
+  letter-spacing: normal !important;
+}
+
+

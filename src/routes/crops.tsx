@@ -13,7 +13,36 @@ import citrusImg from "@/assets/images/crops/citrus.png";
 import watermelonImg from "@/assets/images/crops/watermelon.png";
 import cashewImg from "@/assets/images/crops/cashew.png";
 
+import { supabase } from "@/lib/supabase";
+import { CROPS } from "@/data/crops";
+
+const LOCAL_CROP_IMAGES: Record<string, string> = {
+  chilli: chilliImg,
+  paddy: paddyImg,
+  cotton: cottonImg,
+  mango: mangoImg,
+  tomato: tomatoImg,
+  citrus: citrusImg,
+  watermelon: watermelonImg,
+  cashew: cashewImg,
+};
+
 export const Route = createFileRoute("/crops")({
+  loader: async () => {
+    try {
+      const { data, error } = await supabase
+        .from("crops")
+        .select("*")
+        .order("slug", { ascending: true });
+      if (error || !data || data.length === 0) {
+        return { crops: null };
+      }
+      return { crops: data };
+    } catch (e) {
+      console.error("Failed to fetch crops from Supabase:", e);
+      return { crops: null };
+    }
+  },
   head: () => ({
     meta: [
       { title: "Crop Solutions — Signova Group" },
@@ -26,18 +55,27 @@ export const Route = createFileRoute("/crops")({
 });
 
 function Crops() {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
+  const { crops: dbCrops } = Route.useLoaderData();
 
-  const cropCards = [
-    { slug: "chilli",     name: t("crops.cropsGrid.chilli"),     note: t("crops.cropsGrid.chilliNote"),     img: chilliImg },
-    { slug: "paddy",      name: t("crops.cropsGrid.paddy"),       note: t("crops.cropsGrid.paddyNote"),       img: paddyImg },
-    { slug: "cotton",     name: t("crops.cropsGrid.cotton"),      note: t("crops.cropsGrid.cottonNote"),      img: cottonImg },
-    { slug: "mango",      name: t("crops.cropsGrid.mango"),       note: t("crops.cropsGrid.mangoNote"),       img: mangoImg },
-    { slug: "tomato",     name: t("crops.cropsGrid.tomato"),      note: t("crops.cropsGrid.tomatoNote"),      img: tomatoImg },
-    { slug: "citrus",     name: t("crops.cropsGrid.citrus"),      note: t("crops.cropsGrid.citrusNote"),      img: citrusImg },
-    { slug: "watermelon", name: t("crops.cropsGrid.watermelon"), note: t("crops.cropsGrid.watermelonNote"), img: watermelonImg },
-    { slug: "cashew",     name: t("crops.cropsGrid.cashew"),      note: t("crops.cropsGrid.cashewNote"),      img: cashewImg },
-  ];
+  const cropsList = dbCrops || CROPS;
+
+  const cropCards = cropsList.map((crop) => {
+    const slug = crop.slug;
+    const name = typeof crop.name === "object" && crop.name
+      ? (crop.name[language] || crop.name["en"] || "")
+      : t(`crops.cropsGrid.${crop.slug}` as any, crop.name);
+
+    const note = typeof crop.note === "object" && crop.note
+      ? (crop.note[language] || crop.note["en"] || "")
+      : t(`crops.cropsGrid.${crop.slug}Note` as any, crop.note);
+
+    const img = ("image_url" in crop && crop.image_url)
+      ? crop.image_url
+      : (LOCAL_CROP_IMAGES[slug.toLowerCase()] || ("img" in crop ? crop.img : "") || paddyImg);
+
+    return { slug, name, note, img };
+  });
 
   return (
     <>
@@ -86,17 +124,17 @@ function Crops() {
                     </p>
 
                     {/* Crop name + hover CTA */}
-                    <div className="flex items-end justify-between gap-2">
+                    <div className="flex flex-col w-full">
                       <h3 className="text-white text-2xl md:text-3xl font-bold leading-tight">
                         {crop.name}
                       </h3>
 
-                      {/* View Programme — hidden by default, slides in on hover */}
+                      {/* View Programme — hidden by default, slides in on hover under the name, aligned right */}
                       <span
-                        className="flex items-center gap-1 text-white/80 text-xs font-medium hover:text-white transition-all duration-300 shrink-0 mb-1 opacity-0 translate-y-2 group-hover:opacity-100 group-hover:translate-y-0"
+                        className="flex items-center gap-1 text-white/80 text-xs font-medium hover:text-white transition-all duration-300 opacity-0 max-h-0 translate-y-1 overflow-hidden self-end group-hover:opacity-100 group-hover:max-h-6 group-hover:translate-y-0 group-hover:mt-1.5"
                       >
                         View Programme
-                        <ArrowUpRight className="size-3" />
+                        <ArrowUpRight className="size-3.5" />
                       </span>
                     </div>
                   </div>
