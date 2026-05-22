@@ -114,22 +114,11 @@ export function Footer() {
           </div>
 
           <div>
-            <h4 className="font-semibold mb-4 text-sm uppercase tracking-wider text-lime">{t("footer.newsletter")}</h4>
-            <p className="text-sm text-white/70 mb-3">{t("footer.newsletterDesc")}</p>
-            <form className="flex gap-2" onSubmit={(e) => e.preventDefault()}>
-              <input
-                type="email"
-                placeholder={t("footer.emailPlaceholder")}
-                className="flex-1 min-w-0 px-3 py-2.5 rounded-lg bg-white/10 border border-white/15 text-sm text-white placeholder:text-white/40 focus:outline-none focus:border-lime"
-              />
-              <button className="px-4 py-2.5 rounded-lg bg-lime-gradient text-charcoal text-sm font-semibold hover:opacity-90 cursor-pointer">
-                {t("footer.subscribe")}
-              </button>
-            </form>
-            <div className="mt-6 space-y-2 text-xs text-white/60">
-              <div className="flex items-center gap-2"><Mail className="size-3.5" /> {contact.email}</div>
-              <div className="flex items-center gap-2"><Phone className="size-3.5" /> {contact.phone}</div>
-              <div className="flex items-center gap-2"><MapPin className="size-3.5" /> {contact.address === "Hyderabad, India" ? t("footer.addressVal") : contact.address}</div>
+            <h4 className="font-semibold mb-4 text-sm uppercase tracking-wider text-lime">{t("footer.contact")}</h4>
+            <div className="space-y-4 text-sm text-white/70">
+              <div className="flex items-center gap-3"><Mail className="size-4 text-lime" /> {contact.email}</div>
+              <div className="flex items-center gap-3"><Phone className="size-4 text-lime" /> {contact.phone}</div>
+              <div className="flex items-start gap-3"><MapPin className="size-4 text-lime mt-0.5 shrink-0" /> <span className="leading-relaxed">{contact.address === "Hyderabad, India" ? t("footer.addressVal") : contact.address}</span></div>
             </div>
           </div>
         </div>
