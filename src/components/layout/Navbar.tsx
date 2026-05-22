@@ -68,6 +68,7 @@ export function Navbar() {
   const translateLabel = (label: string, id: string) => {
     switch (id) {
       case "home": return t("navbar.home");
+      case "products": return t("navbar.products");
       case "company": return t("navbar.company");
       case "solutions": return t("navbar.solutions");
       case "partner": return t("navbar.partner");
