@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { motion } from "framer-motion";
-import { Target, Eye, Heart, Award } from "lucide-react";
+import { Target, Eye, Heart, Award, Play } from "lucide-react";
 import lab from "@/assets/images/lab.jpg";
 import farmer from "@/assets/images/farmer.jpg";
 import { PageHero } from "@/components/layout/PageShell";
@@ -45,9 +45,16 @@ function About() {
 
       <section className="py-28">
         <div className="max-w-7xl mx-auto px-6 grid lg:grid-cols-2 gap-16 items-center">
-          <div className="relative">
-            <div className="absolute -inset-6 bg-lime-gradient opacity-20 blur-3xl rounded-3xl" />
-            <img src={farmer} loading="lazy" alt="Farmer in field" className="relative rounded-3xl shadow-card" />
+          <div className="relative group">
+            <div className="absolute -inset-6 bg-lime-gradient opacity-20 blur-3xl rounded-3xl transition-opacity group-hover:opacity-40" />
+            <a href="https://www.youtube.com/watch?v=ftm_aUttYGo" target="_blank" rel="noopener noreferrer" className="relative block rounded-3xl overflow-hidden shadow-card">
+              <img src="/signova-hq.jpg" loading="lazy" alt="Signova Headquarters" className="w-full h-auto transform transition-transform duration-700 group-hover:scale-105" />
+              <div className="absolute inset-0 bg-black/20 flex items-center justify-center transition-colors group-hover:bg-black/30">
+                <div className="size-20 rounded-full bg-white/20 backdrop-blur-sm grid place-items-center ring-1 ring-white/50 group-hover:scale-110 transition-transform">
+                  <Play className="size-8 text-white fill-white ml-1" />
+                </div>
+              </div>
+            </a>
           </div>
           <div>
             <div className="text-xs uppercase tracking-[0.25em] text-leaf font-semibold mb-4">{t("about.story.eyebrow")}</div>
