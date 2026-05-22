@@ -150,12 +150,9 @@ export const en = {
     story: {
       eyebrow: "Our Story",
       title: "Signova Group of Companies",
-      desc1: "Established in 2013, Signova Group of Companies stands at the forefront of agricultural innovation, specializing in micronutrients and bio-products designed to enhance soil health and maximize farmer productivity. Our core mission is to provide advanced solutions that support sustainable farming practices and address the specific needs of the agricultural community.",
-      desc2: "Our commitment to excellence is reflected in our state-of-the-art manufacturing facility, which operates in compliance with ISO standards and is equipped with the latest technology. This infrastructure allows us to produce high-quality products that are effective in improving soil conditions and boosting crop yields.",
-      desc3: "Our diverse product range includes micronutrients, bio-products, growth promoters, bio-fungicides, and organic products. Each product is meticulously formulated using premium organic raw materials to ensure superior performance. By enhancing soil fertility and promoting plant health, our solutions contribute to a more productive and sustainable agricultural environment.",
-      desc4: "The benefits of our products extend directly to farmers, providing them with tools to improve crop quality and yield while also promoting soil sustainability. Our solutions help optimize resource use, reduce environmental impact, and support long-term agricultural success.",
-      desc5: "At Signova, our experienced bio-technicians, skilled professionals, and dedicated team members work in unison to deliver products that meet the highest standards of quality. We are committed to fostering long-term partnerships with our clients, driving innovation, and setting new benchmarks in the agricultural sector.",
-      desc6: "Partner with Signova Group of Companies and experience the transformative benefits of our advanced agricultural solutions for both soil health and farmer productivity."
+      desc1: "Established in 2013, Signova Group stands at the forefront of agricultural innovation. We specialize in advanced micronutrients and bio-products designed to enhance soil health, boost crop yields, and maximize farmer productivity.",
+      desc2: "Backed by a state-of-the-art, ISO-compliant manufacturing facility and a dedicated team of bio-technicians, our diverse product range—including growth promoters, bio-fungicides, and organic inputs—is meticulously formulated using premium raw materials.",
+      desc3: "We are committed to empowering the agricultural community with sustainable solutions. Partner with Signova to experience transformative benefits for both your soil health and your harvest."
     },
     values: {
       missionTitle: "Mission",

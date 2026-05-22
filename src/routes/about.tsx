@@ -59,23 +59,14 @@ function About() {
           <div>
             <div className="text-xs uppercase tracking-[0.25em] text-leaf font-semibold mb-4">{t("about.story.eyebrow")}</div>
             <h2 className="text-4xl md:text-5xl font-bold mb-6 leading-tight">{t("about.story.title")}</h2>
-            <p className="text-muted-foreground text-lg leading-relaxed mb-4">
+            <p className="text-muted-foreground text-lg leading-relaxed mb-6">
               {t("about.story.desc1")}
             </p>
-            <p className="text-muted-foreground leading-relaxed mb-4">
+            <p className="text-muted-foreground leading-relaxed mb-6">
               {t("about.story.desc2")}
             </p>
-            <p className="text-muted-foreground leading-relaxed mb-4">
-              {t("about.story.desc3")}
-            </p>
-            <p className="text-muted-foreground leading-relaxed mb-4">
-              {t("about.story.desc4")}
-            </p>
-            <p className="text-muted-foreground leading-relaxed mb-4">
-              {t("about.story.desc5")}
-            </p>
             <p className="text-leaf font-medium leading-relaxed">
-              {t("about.story.desc6")}
+              {t("about.story.desc3")}
             </p>
           </div>
         </div>
