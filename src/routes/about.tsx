@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { motion } from "framer-motion";
-import { Target, Eye, Heart, Award, Play } from "lucide-react";
+import { useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Target, Eye, Heart, Award, Play, X } from "lucide-react";
 import lab from "@/assets/images/lab.jpg";
 import farmer from "@/assets/images/farmer.jpg";
 import { PageHero } from "@/components/layout/PageShell";
@@ -20,6 +21,7 @@ export const Route = createFileRoute("/about")({
 
 function About() {
   const { t } = useLanguage();
+  const [isVideoOpen, setIsVideoOpen] = useState(false);
 
   const localizedValues = [
     { i: Target, t: t("about.values.missionTitle"), d: t("about.values.missionDesc") },
@@ -47,14 +49,14 @@ function About() {
         <div className="max-w-7xl mx-auto px-6 grid lg:grid-cols-2 gap-16 items-center">
           <div className="relative group">
             <div className="absolute -inset-6 bg-lime-gradient opacity-20 blur-3xl rounded-3xl transition-opacity group-hover:opacity-40" />
-            <a href="https://www.youtube.com/watch?v=ftm_aUttYGo" target="_blank" rel="noopener noreferrer" className="relative block rounded-3xl overflow-hidden shadow-card">
+            <button onClick={() => setIsVideoOpen(true)} className="relative block w-full rounded-3xl overflow-hidden shadow-card text-left focus:outline-none">
               <img src="/signova-hq.jpg" loading="lazy" alt="Signova Headquarters" className="w-full h-auto transform transition-transform duration-700 group-hover:scale-105" />
               <div className="absolute inset-0 bg-black/20 flex items-center justify-center transition-colors group-hover:bg-black/30">
                 <div className="size-20 rounded-full bg-white/20 backdrop-blur-sm grid place-items-center ring-1 ring-white/50 group-hover:scale-110 transition-transform">
                   <Play className="size-8 text-white fill-white ml-1" />
                 </div>
               </div>
-            </a>
+            </button>
           </div>
           <div>
             <div className="text-xs uppercase tracking-[0.25em] text-leaf font-semibold mb-4">{t("about.story.eyebrow")}</div>
@@ -165,6 +167,39 @@ function About() {
           </div>
         </div>
       </section>
+      <AnimatePresence>
+        {isVideoOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm"
+            onClick={() => setIsVideoOpen(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              className="relative w-full max-w-5xl aspect-video bg-black rounded-2xl overflow-hidden shadow-2xl"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <button
+                onClick={() => setIsVideoOpen(false)}
+                className="absolute top-4 right-4 z-10 p-2 bg-black/50 hover:bg-black/80 text-white rounded-full transition-colors"
+              >
+                <X className="size-6" />
+              </button>
+              <iframe
+                className="w-full h-full"
+                src="https://www.youtube.com/embed/ftm_aUttYGo?autoplay=1"
+                title="Signova Group Video"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+              />
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </>
   );
 }
