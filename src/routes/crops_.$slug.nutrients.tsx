@@ -287,17 +287,17 @@ function CropNutrients() {
           </div>
 
           {/* Bottom CTA */}
-          <div className="mt-24 relative overflow-hidden rounded-3xl border border-border bg-gradient-to-br from-primary via-emerald-800 to-emerald-950 p-10 md:p-14 text-primary-foreground">
+          <div className="mt-24 relative overflow-hidden rounded-3xl border border-border bg-gradient-to-br from-primary via-emerald-800 to-emerald-950 p-10 md:p-14 text-white">
             <div className="absolute -top-20 -right-20 size-72 rounded-full bg-lime-500/10 blur-3xl" />
             <div className="relative grid md:grid-cols-[1.6fr_1fr] gap-8 items-center">
               <div>
-                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 backdrop-blur text-xs uppercase tracking-[0.18em] mb-4">
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 backdrop-blur text-xs uppercase tracking-[0.18em] mb-4 text-white/90">
                   <ShieldCheck className="size-3.5" /> Trusted by 100,000+ farmers
                 </div>
-                <h3 className="text-3xl md:text-4xl font-bold leading-tight">
+                <h3 className="text-3xl md:text-4xl font-bold leading-tight text-white">
                   Not sure which deficiency you're seeing?
                 </h3>
-                <p className="mt-3 text-primary-foreground/80 max-w-xl">
+                <p className="mt-3 text-white/80 max-w-xl">
                   Send a photo of your field to our agronomist — get a personalised spray schedule for your
                   {" "}{cropName.toLowerCase()} crop within 24 hours.
                 </p>
