@@ -136,6 +136,13 @@ export const en = {
     }
   },
   about: {
+    leadership: {
+      eyebrow: "Leadership",
+      title: "Our Visionary Leadership",
+      quote: "Since our inception, our core philosophy has always been to empower the Indian farmer with world-class, scientifically proven agricultural solutions. We believe that when the farmer grows, the nation thrives.",
+      role: "Founder & CEO",
+      company: "Signova Group"
+    },
     timeline: {
       eyebrow: "Milestones",
       title: "Our journey so far",

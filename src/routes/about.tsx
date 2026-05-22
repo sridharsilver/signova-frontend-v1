@@ -85,17 +85,17 @@ function About() {
             />
           </div>
           <div className="md:col-span-7 text-center md:text-left">
-            <div className="text-xs uppercase tracking-[0.25em] text-leaf font-semibold mb-3">Leadership</div>
-            <h2 className="text-4xl md:text-5xl font-bold mb-6">Our Visionary Leadership</h2>
+            <div className="text-xs uppercase tracking-[0.25em] text-leaf font-semibold mb-3">{t("about.leadership.eyebrow")}</div>
+            <h2 className="text-4xl md:text-5xl font-bold mb-6">{t("about.leadership.title")}</h2>
             <div className="relative">
               <span className="absolute -top-6 -left-6 text-6xl text-leaf/20 font-serif">"</span>
               <p className="text-muted-foreground text-lg leading-relaxed mb-8 italic relative z-10">
-                Since our inception, our core philosophy has always been to empower the Indian farmer with world-class, scientifically proven agricultural solutions. We believe that when the farmer grows, the nation thrives.
+                {t("about.leadership.quote")}
               </p>
             </div>
             <div>
-              <div className="font-bold text-2xl text-foreground">Founder & CEO</div>
-              <div className="text-leaf font-medium mt-1">Signova Group</div>
+              <div className="font-bold text-2xl text-foreground">{t("about.leadership.role")}</div>
+              <div className="text-leaf font-medium mt-1">{t("about.leadership.company")}</div>
             </div>
           </div>
         </div>
