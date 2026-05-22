@@ -1,7 +1,7 @@
 export const en = {
   navbar: {
     home: "Home",
-    company: "Company",
+    company: "Chairman & Managing Director",
     aboutUs: "About Us",
     infrastructure: "Infrastructure",
     innovation: "R&D and Innovation",
@@ -19,7 +19,7 @@ export const en = {
   },
   footer: {
     desc: "Science-led crop nutrition developing chelation chemistries, bio-stimulants, and precision formulations for sustainable harvests.",
-    company: "Company",
+    company: "Chairman & Managing Director",
     solutions: "Solutions",
     partner: "Partner",
     contact: "Contact",
@@ -140,8 +140,8 @@ export const en = {
       eyebrow: "Leadership",
       title: "Our Visionary Leadership",
       quote: "Since our inception, our core philosophy has always been to empower the Indian farmer with world-class, scientifically proven agricultural solutions. We believe that when the farmer grows, the nation thrives.",
-      role: "Founder & CEO",
-      company: "Signova Group"
+      role: "V.Srinivas Naidu",
+      company: "Chairman & Managing Director"
     },
     timeline: {
       eyebrow: "Milestones",
