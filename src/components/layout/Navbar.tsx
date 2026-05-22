@@ -78,6 +78,7 @@ export function Navbar() {
   const translateSubLabel = (to: string, fallback: string) => {
     switch (to) {
       case "/about": return t("navbar.aboutUs");
+      case "/infrastructure": return t("navbar.infrastructure");
       case "/innovation": return t("navbar.innovation");
       case "/careers": return t("navbar.careers");
       case "/products": return t("navbar.products");
@@ -94,6 +95,7 @@ export function Navbar() {
     if (to === "/ai-chat") return t("navbar.aiChatDesc");
     switch (to) {
       case "/about": return t("about.values.missionTitle");
+      case "/infrastructure": return t("infrastructure.hero.title");
       case "/innovation": return t("home.innovation.eyebrow");
       case "/careers": return t("careers.hero.eyebrow");
       case "/products": return t("home.categories.chelated.title");

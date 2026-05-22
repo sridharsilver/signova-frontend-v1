@@ -43,6 +43,7 @@ export const DEFAULT_MENU: MenuSettings = {
       visible: true,
       children: [
         { id: "about",      to: "/about",      label: "About Us",          desc: "Our story, mission & vision",     visible: true },
+        { id: "infrastructure", to: "/infrastructure", label: "Infrastructure", desc: "State-of-the-art facilities", visible: true },
         { id: "innovation", to: "/innovation", label: "R&D and Innovation", desc: "Science behind Signova",         visible: true },
         { id: "careers",    to: "/careers",    label: "Careers",           desc: "Join our growing team",           visible: true },
       ],

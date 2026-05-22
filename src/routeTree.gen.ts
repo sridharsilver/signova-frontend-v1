@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as ProductsRouteImport } from './routes/products'
 import { Route as KnowledgeRouteImport } from './routes/knowledge'
 import { Route as InnovationRouteImport } from './routes/innovation'
+import { Route as InfrastructureRouteImport } from './routes/infrastructure'
 import { Route as DistributorRouteImport } from './routes/distributor'
 import { Route as CropsRouteImport } from './routes/crops'
 import { Route as ContactRouteImport } from './routes/contact'
@@ -35,6 +36,11 @@ const KnowledgeRoute = KnowledgeRouteImport.update({
 const InnovationRoute = InnovationRouteImport.update({
   id: '/innovation',
   path: '/innovation',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const InfrastructureRoute = InfrastructureRouteImport.update({
+  id: '/infrastructure',
+  path: '/infrastructure',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DistributorRoute = DistributorRouteImport.update({
@@ -91,6 +97,7 @@ export interface FileRoutesByFullPath {
   '/contact': typeof ContactRoute
   '/crops': typeof CropsRoute
   '/distributor': typeof DistributorRoute
+  '/infrastructure': typeof InfrastructureRoute
   '/innovation': typeof InnovationRoute
   '/knowledge': typeof KnowledgeRouteWithChildren
   '/products': typeof ProductsRoute
@@ -105,6 +112,7 @@ export interface FileRoutesByTo {
   '/contact': typeof ContactRoute
   '/crops': typeof CropsRoute
   '/distributor': typeof DistributorRoute
+  '/infrastructure': typeof InfrastructureRoute
   '/innovation': typeof InnovationRoute
   '/knowledge': typeof KnowledgeRouteWithChildren
   '/products': typeof ProductsRoute
@@ -120,6 +128,7 @@ export interface FileRoutesById {
   '/contact': typeof ContactRoute
   '/crops': typeof CropsRoute
   '/distributor': typeof DistributorRoute
+  '/infrastructure': typeof InfrastructureRoute
   '/innovation': typeof InnovationRoute
   '/knowledge': typeof KnowledgeRouteWithChildren
   '/products': typeof ProductsRoute
@@ -136,6 +145,7 @@ export interface FileRouteTypes {
     | '/contact'
     | '/crops'
     | '/distributor'
+    | '/infrastructure'
     | '/innovation'
     | '/knowledge'
     | '/products'
@@ -150,6 +160,7 @@ export interface FileRouteTypes {
     | '/contact'
     | '/crops'
     | '/distributor'
+    | '/infrastructure'
     | '/innovation'
     | '/knowledge'
     | '/products'
@@ -164,6 +175,7 @@ export interface FileRouteTypes {
     | '/contact'
     | '/crops'
     | '/distributor'
+    | '/infrastructure'
     | '/innovation'
     | '/knowledge'
     | '/products'
@@ -179,6 +191,7 @@ export interface RootRouteChildren {
   ContactRoute: typeof ContactRoute
   CropsRoute: typeof CropsRoute
   DistributorRoute: typeof DistributorRoute
+  InfrastructureRoute: typeof InfrastructureRoute
   InnovationRoute: typeof InnovationRoute
   KnowledgeRoute: typeof KnowledgeRouteWithChildren
   ProductsRoute: typeof ProductsRoute
@@ -206,6 +219,13 @@ declare module '@tanstack/react-router' {
       path: '/innovation'
       fullPath: '/innovation'
       preLoaderRoute: typeof InnovationRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/infrastructure': {
+      id: '/infrastructure'
+      path: '/infrastructure'
+      fullPath: '/infrastructure'
+      preLoaderRoute: typeof InfrastructureRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/distributor': {
@@ -294,6 +314,7 @@ const rootRouteChildren: RootRouteChildren = {
   ContactRoute: ContactRoute,
   CropsRoute: CropsRoute,
   DistributorRoute: DistributorRoute,
+  InfrastructureRoute: InfrastructureRoute,
   InnovationRoute: InnovationRoute,
   KnowledgeRoute: KnowledgeRouteWithChildren,
   ProductsRoute: ProductsRoute,

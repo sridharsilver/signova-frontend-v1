@@ -3,6 +3,7 @@ export const en = {
     home: "Home",
     company: "Company",
     aboutUs: "About Us",
+    infrastructure: "Infrastructure",
     innovation: "R&D and Innovation",
     careers: "Careers",
     solutions: "Solutions",
@@ -352,6 +353,29 @@ export const en = {
       published: "Published",
       author: "By",
       share: "Share"
+    }
+  },
+  infrastructure: {
+    hero: {
+      title: "Advanced Facilities for Agriculture",
+      subtitle: "Signova Infrastructure boasts advanced facilities, providing top-tier agricultural solutions for optimal crop growth."
+    },
+    f1: { title: "State-of-the-Art Manufacturing", desc: "Equipped with cutting-edge machinery and technology to ensure high-capacity production with precision." },
+    f2: { title: "Advanced R&D Labs", desc: "Dedicated research and development centers where our team of scientists innovate new agri-tech solutions." },
+    f3: { title: "Rigorous Quality Assurance", desc: "Comprehensive testing at every stage to ensure products meet global ISO standards." },
+    f4: { title: "Sustainable Practices", desc: "Energy-efficient operations and advanced water management to conserve environmental resources." },
+    f5: { title: "Robust IT & Data", desc: "Secure data management and automated control systems to maximize efficiency and protect intellectual property." },
+    why: {
+      eyebrow: "Why Choose Signova?",
+      title: "Built for Excellence",
+      p1title: "Innovative Excellence",
+      p1desc: "Our infrastructure supports the development and production of pioneering micronutrients, bioproducts, nanotech solutions, and organic products.",
+      p2title: "Uncompromising Quality",
+      p2desc: "We maintain the highest standards of quality through rigorous assurance and control processes.",
+      p3title: "Environmental Stewardship",
+      p3desc: "Our commitment to sustainability is reflected in our eco-friendly practices and energy-efficient operations.",
+      p4title: "Expertise and Experience",
+      p4desc: "Our team of experts brings a wealth of knowledge and experience, ensuring superior performance and innovative solutions."
     }
   }
 };
