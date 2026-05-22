@@ -29,8 +29,7 @@ function About() {
   ];
 
   const localizedTimeline = [
-    { y: "2004", t: t("about.timeline.y2004t"), d: t("about.timeline.y2004d") },
-    { y: "2010", t: t("about.timeline.y2010t"), d: t("about.timeline.y2010d") },
+    { y: "2013", t: t("about.timeline.y2013t"), d: t("about.timeline.y2013d") },
     { y: "2016", t: t("about.timeline.y2016t"), d: t("about.timeline.y2016d") },
     { y: "2021", t: t("about.timeline.y2021t"), d: t("about.timeline.y2021d") },
     { y: "2025", t: t("about.timeline.y2025t"), d: t("about.timeline.y2025d") },
@@ -56,9 +55,48 @@ function About() {
             <p className="text-muted-foreground text-lg leading-relaxed mb-4">
               {t("about.story.desc1")}
             </p>
-            <p className="text-muted-foreground leading-relaxed">
+            <p className="text-muted-foreground leading-relaxed mb-4">
               {t("about.story.desc2")}
             </p>
+            <p className="text-muted-foreground leading-relaxed mb-4">
+              {t("about.story.desc3")}
+            </p>
+            <p className="text-muted-foreground leading-relaxed mb-4">
+              {t("about.story.desc4")}
+            </p>
+            <p className="text-muted-foreground leading-relaxed mb-4">
+              {t("about.story.desc5")}
+            </p>
+            <p className="text-leaf font-medium leading-relaxed">
+              {t("about.story.desc6")}
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <section className="py-24">
+        <div className="max-w-6xl mx-auto px-6 grid md:grid-cols-12 gap-12 items-center">
+          <div className="md:col-span-5 relative">
+            <div className="absolute -inset-4 bg-lime-gradient opacity-30 blur-2xl rounded-full" />
+            <img 
+              src="/ceo-profile.jpg" 
+              alt="Founder & CEO" 
+              className="relative w-full max-w-sm mx-auto aspect-[4/5] object-cover rounded-[2.5rem] shadow-xl transition-all duration-500 hover:scale-[1.02]" 
+            />
+          </div>
+          <div className="md:col-span-7 text-center md:text-left">
+            <div className="text-xs uppercase tracking-[0.25em] text-leaf font-semibold mb-3">Leadership</div>
+            <h2 className="text-4xl md:text-5xl font-bold mb-6">Our Visionary Leadership</h2>
+            <div className="relative">
+              <span className="absolute -top-6 -left-6 text-6xl text-leaf/20 font-serif">"</span>
+              <p className="text-muted-foreground text-lg leading-relaxed mb-8 italic relative z-10">
+                Since our inception, our core philosophy has always been to empower the Indian farmer with world-class, scientifically proven agricultural solutions. We believe that when the farmer grows, the nation thrives.
+              </p>
+            </div>
+            <div>
+              <div className="font-bold text-2xl text-foreground">Founder & CEO</div>
+              <div className="text-leaf font-medium mt-1">Signova Group</div>
+            </div>
           </div>
         </div>
       </section>
