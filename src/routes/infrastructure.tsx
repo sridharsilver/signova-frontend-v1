@@ -1,6 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { motion } from "framer-motion";
-import { Factory, FlaskConical, ShieldCheck, Leaf, Server } from "lucide-react";
 import { PageHero } from "@/components/layout/PageShell";
 import { useLanguage } from "@/hooks/use-language";
 
@@ -21,27 +20,27 @@ function Infrastructure() {
 
   const facilities = [
     {
-      icon: Factory,
+      image: "/images/infrastructure/f1-manufacturing.png",
       title: t("infrastructure.f1.title"),
       desc: t("infrastructure.f1.desc"),
     },
     {
-      icon: FlaskConical,
+      image: "/images/infrastructure/f2-research.png",
       title: t("infrastructure.f2.title"),
       desc: t("infrastructure.f2.desc"),
     },
     {
-      icon: ShieldCheck,
+      image: "/images/infrastructure/f3-qa.png",
       title: t("infrastructure.f3.title"),
       desc: t("infrastructure.f3.desc"),
     },
     {
-      icon: Leaf,
+      image: "/images/infrastructure/f4-sustainable.png",
       title: t("infrastructure.f4.title"),
       desc: t("infrastructure.f4.desc"),
     },
     {
-      icon: Server,
+      image: "/images/infrastructure/f5-it.png",
       title: t("infrastructure.f5.title"),
       desc: t("infrastructure.f5.desc"),
     },
@@ -57,7 +56,7 @@ function Infrastructure() {
 
       <section className="py-24">
         <div className="max-w-7xl mx-auto px-6">
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-6 gap-8">
             {facilities.map((fac, i) => (
               <motion.div
                 key={i}
@@ -65,20 +64,23 @@ function Infrastructure() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: i * 0.1 }}
-                className="bg-card rounded-3xl p-8 border border-border/50 shadow-sm hover:shadow-md transition-shadow group relative overflow-hidden"
+                className={`bg-card rounded-3xl border border-border/50 shadow-sm hover:shadow-md transition-shadow group relative overflow-hidden flex flex-col ${
+                  i < 2 ? "md:col-span-3" : "md:col-span-2"
+                }`}
               >
-                <div className="absolute top-0 right-0 w-32 h-32 bg-lime-gradient opacity-10 rounded-bl-full translate-x-10 -translate-y-10 group-hover:scale-110 transition-transform" />
-                
-                <div className="size-14 rounded-2xl bg-secondary flex items-center justify-center text-primary-text mb-6 group-hover:scale-110 transition-transform relative z-10">
-                  <fac.icon className="size-7" strokeWidth={1.5} />
+                <div className="aspect-[4/3] w-full overflow-hidden relative">
+                  <div className="absolute inset-0 bg-lime-gradient mix-blend-multiply opacity-20 z-10 pointer-events-none transition-opacity group-hover:opacity-0" />
+                  <img src={fac.image} alt={fac.title} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
                 </div>
                 
-                <h3 className="text-xl font-bold mb-3 text-card-foreground relative z-10">
-                  {fac.title}
-                </h3>
-                <p className="text-muted-foreground leading-relaxed relative z-10">
-                  {fac.desc}
-                </p>
+                <div className="p-8 flex-1 flex flex-col">
+                  <h3 className="text-xl font-bold mb-3 text-card-foreground">
+                    {fac.title}
+                  </h3>
+                  <p className="text-muted-foreground leading-relaxed">
+                    {fac.desc}
+                  </p>
+                </div>
               </motion.div>
             ))}
           </div>
