@@ -67,6 +67,7 @@ export default defineConfig(({ mode }) => {
         "/supabase-api": {
           target: supabaseUrl,
           changeOrigin: true,
+          ws: true,
           rewrite: (path) => path.replace(/^\/supabase-api/, ""),
         },
       },
