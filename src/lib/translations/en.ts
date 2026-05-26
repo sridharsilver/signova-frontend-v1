@@ -1,7 +1,7 @@
 export const en = {
   navbar: {
     home: "Home",
-    company: "Chairman & Managing Director",
+    company: "Company",
     aboutUs: "About Us",
     infrastructure: "Infrastructure",
     innovation: "R&D and Innovation",
@@ -19,7 +19,7 @@ export const en = {
   },
   footer: {
     desc: "Science-led crop nutrition developing chelation chemistries, bio-stimulants, and precision formulations for sustainable harvests.",
-    company: "Chairman & Managing Director",
+    company: "Company",
     solutions: "Solutions",
     partner: "Partner",
     contact: "Contact",

@@ -66,30 +66,25 @@ export function Navbar() {
     item.children?.some((c: any) => c.to === path) ?? false;
 
   const translateLabel = (label: string, id: string) => {
-    switch (id) {
-      case "home": return t("navbar.home");
-      case "products": return t("navbar.products");
-      case "company": return t("navbar.company");
-      case "solutions": return t("navbar.solutions");
-      case "partner": return t("navbar.partner");
-      default: return label;
-    }
+    return t(`navbar.${id}`, label);
+  };
+
+  const SUB_LABEL_KEYS: Record<string, string> = {
+    "/about": "aboutUs",
+    "/infrastructure": "infrastructure",
+    "/innovation": "innovation",
+    "/careers": "careers",
+    "/products": "products",
+    "/crops": "crops",
+    "/knowledge": "knowledge",
+    "/ai-chat": "aiChat",
+    "/distributor": "becomeDistributor",
+    "/contact": "contactUs",
   };
 
   const translateSubLabel = (to: string, fallback: string) => {
-    switch (to) {
-      case "/about": return t("navbar.aboutUs");
-      case "/infrastructure": return t("navbar.infrastructure");
-      case "/innovation": return t("navbar.innovation");
-      case "/careers": return t("navbar.careers");
-      case "/products": return t("navbar.products");
-      case "/crops": return t("navbar.crops");
-      case "/knowledge": return t("navbar.knowledge");
-      case "/ai-chat": return t("navbar.aiChat");
-      case "/distributor": return t("navbar.becomeDistributor");
-      case "/contact": return t("navbar.contactUs");
-      default: return fallback;
-    }
+    const key = SUB_LABEL_KEYS[to];
+    return key ? t(`navbar.${key}`, fallback) : fallback;
   };
 
   const translateSubDesc = (to: string, fallback: string) => {
