@@ -16,9 +16,12 @@ export async function withTimeout<T>(
     }, timeoutMs);
   });
 
+  const nativePromise = Promise.resolve(promise);
+
   try {
-    return await Promise.race([promise, timeoutPromise]);
+    return await Promise.race([nativePromise, timeoutPromise]);
   } finally {
     clearTimeout(timeoutId);
   }
 }
+
